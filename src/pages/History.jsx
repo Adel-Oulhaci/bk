@@ -16,7 +16,7 @@ export default function History() {
         const eventsData = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
-          date: new Date(doc.data().date.seconds * 1000).toLocaleDateString('en-US', {
+          date: new Date(doc.data().date.seconds * 1000).toLocaleDateString('fr-FR', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit'

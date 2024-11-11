@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.card {
+  @apply w-full cursor-pointer rounded-md h-44 self-end;
+}
+.card-active {
+  @apply h-72;
+}
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k-card-body > .k-card-actions {
+  margin-top: 20px;
+}

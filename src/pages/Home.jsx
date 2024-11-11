@@ -287,7 +287,7 @@ export default function Home() {
                 {nextEvent.description}
               </p>
               <Link
-                to={`/inscription/${nextEvent.title.toLowerCase().replace(/\s+/g, '-')}`}
+                to={`/inscription/${nextEvent.id}`}
                 className="bg-green-bk text-white font-semibold px-6 py-3 rounded-lg hover:bg-[#148563] transition"
               >
                 Pre-Register Now

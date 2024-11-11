@@ -29,12 +29,12 @@ function Event() {
     const fetchEvents = async () => {
       try {
         const eventsRef = collection(db, 'events');
-        const q = query(eventsRef, orderBy('date', 'desc'));
+        const q = query(eventsRef, orderBy('date', 'asc'));
         const querySnapshot = await getDocs(q);
         const eventsData = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
-          date: new Date(doc.data().date.seconds * 1000).toLocaleDateString()
+          date: new Date(doc.data().date.seconds * 1000).toLocaleDateString('fr-FR')
         }));
         setEvents(eventsData);
         setError(null);

@@ -34,3 +34,4 @@ export default function EventCard({ event, onLearnMore }) {
     </div>
   );
 }
+ 

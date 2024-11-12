@@ -65,6 +65,13 @@ export default function Header() {
           >
             About Us
           </Link>
+                    <Link
+            to="/team"
+            className="block mt-4 lg:inline-block lg:mt-0 text-white font-semibold hover:bg-gray-one7 py-2 px-4 rounded-md"
+            onClick={closeMenu} 
+          >
+            Our Team
+          </Link> 
           <Link
             to="/history"
             className="block mt-4 lg:inline-block lg:mt-0 text-white font-semibold hover:bg-gray-one7 py-2 px-4 rounded-md"
@@ -72,13 +79,6 @@ export default function Header() {
           >
             History
           </Link>
-          {/* <Link
-            to="/inscription"
-            className="block mt-4 lg:inline-block lg:mt-0 text-white font-semibold hover:bg-gray-one7 py-2 px-4 rounded-md"
-            onClick={closeMenu} 
-          >
-            Inscription
-          </Link> */}
         </div>
       </div>
     </nav>

@@ -6,6 +6,7 @@ import About from "./pages/About";
 import Event from "./pages/Event";
 import History from "./pages/History";
 import AdminPanel from "./pages/AdminPanel";
+import Team from "./pages/Team";
 // import Login from "./pages/Login";
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
           <Route path="about" element={<About />} />
           <Route path="event" element={<Event />} />
           <Route path="history" element={<History />} />
+          <Route path="team" element={<Team />} />
           <Route path="inscription/:eventId" element={<Inscription />} />
           <Route path="admin" element={<AdminPanel />} />
           {/* <Route path="login" element={<Login />} /> */}

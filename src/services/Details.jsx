@@ -102,4 +102,94 @@ export const ABOUT = [
   img: join
 }
 ];
+ export const responsables = [
+  {
+    name: "ANES GHALEM",
+    role: "Media Manager",
+    image:
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&h=200&fit=crop",
+    date: "Depuis Nov 2023",
+  },
+  {
+    name: "ABDELLATIF FERILA ZAZOU",
+    role: "President",
+    image:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&h=200&fit=crop",
+    date: "Depuis Nov 2023",
+  },
+  {
+    name: "ANES GHALEM",
+    role: "Media Manager",
+    image:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&h=200&fit=crop",
+    date: "Depuis Nov 2023",
+  },
+  {
+    name: "ANES GHALEM",
+    role: "Media Manager",
+    image:
+      "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?q=80&w=200&h=200&fit=crop",
+    date: "Depuis Nov 2023",
+  },
+  {
+    name: "KAWTHER CHAMARA",
+    role: "Program & Events",
+    image:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200&h=200&fit=crop",
+    date: "Depuis Nov 2023",
+  },
+  {
+    name: "DJILLALI SAIM",
+    role: "Tech & Development",
+    image:
+      "https://images.unsplash.com/photo-1463453091185-61582044d556?q=80&w=200&h=200&fit=crop",
+    date: "Depuis Nov 2023",
+  },
+  {
+    name: "ANES GHALEM",
+    role: "Media Manager",
+    image:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&h=200&fit=crop",
+    date: "Depuis Nov 2023",
+  },
+];
+
+export const members = [
+  {
+    name: "ANES GHALEM",
+    role: "Finalizer",
+    image:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&h=200&fit=crop",
+  },
+  {
+    name: "ANES GHALEM",
+    role: "Finalizer",
+    image:
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&h=200&fit=crop",
+  },
+  {
+    name: "ANES GHALEM",
+    role: "Finalizer",
+    image:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&h=200&fit=crop",
+  },
+  {
+    name: "ANES GHALEM",
+    role: "Finalizer",
+    image:
+      "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?q=80&w=200&h=200&fit=crop",
+  },
+  {
+    name: "ANES GHALEM",
+    role: "Finalizer",
+    image:
+      "https://images.unsplash.com/photo-1463453091185-61582044d556?q=80&w=200&h=200&fit=crop",
+  },
+  {
+    name: "ANES GHALEM",
+    role: "Finalizer",
+    image:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&h=200&fit=crop",
+  },
+];
 

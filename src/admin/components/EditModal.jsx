@@ -12,7 +12,7 @@ export default function EditModal({ user, onClose, onUpdate }) {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value 
     }));
   };
 

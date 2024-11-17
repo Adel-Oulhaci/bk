@@ -11,10 +11,14 @@ const firebaseConfig = {
   appId: "1:439322467395:web:c3b04eae424c525ab648f6"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Initialize Firestore and Auth
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
+// Utility function for image conversion
 export const convertImageToBase64 = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -23,3 +27,6 @@ export const convertImageToBase64 = (file) => {
     reader.onerror = (error) => reject(error);
   });
 };
+
+// Export the app instance as well
+export default app;

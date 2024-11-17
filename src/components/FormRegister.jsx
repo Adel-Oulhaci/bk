@@ -124,10 +124,10 @@ const FormRegister = ({ eventId }) => {
       });
     } catch (err) {
       setError(err.message || "Registration failed. Please try again.");
-    } finally {
+    } finally { 
       setLoading(false);
     }
-  };
+  }; 
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-4">

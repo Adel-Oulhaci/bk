@@ -1,25 +1,85 @@
-import { useState } from "react";
-import usersdata from "../data/usersdata.json";
-import { BiSearch, BiTrash } from "react-icons/bi";
+import { useState, useEffect } from "react";
+import { collection, query, getDocs, deleteDoc, doc, writeBatch } from 'firebase/firestore';
+import { db } from '../../firebase';
+import { BiSearch, BiTrash, BiEdit } from "react-icons/bi";
 import { IoMdArrowDropup, IoMdArrowDropdown } from "react-icons/io";
+import EditModal from "./EditModal";
 
 const UserDetailsTab = () => {
-  const [users] = useState(usersdata);
+  const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage, setUsersPerPage] = useState(10);
+  const [loading, setLoading] = useState(true);
+  const [editingUser, setEditingUser] = useState(null);
   const [sortConfig, setSortConfig] = useState({
-    key: "id",
-    direction: "ascending",
+    key: "timestamp",
+    direction: "descending",
   });
 
   const columns = [
-    { Header: "ID", accessor: "id" },
-    { Header: "Username", accessor: "username" },
+    { Header: "First Name", accessor: "firstn" },
+    { Header: "Last Name", accessor: "lastn" },
     { Header: "Email", accessor: "email" },
     { Header: "Phone", accessor: "phone" },
-    { Header: "Creation Date", accessor: "creationDate" },
+    { Header: "Academic Level", accessor: "academiclevel" },
+    { Header: "Faculty", accessor: "faculty" },
+    { Header: "Registration Date", accessor: "timestamp" },
   ];
+
+  useEffect(() => {
+    fetchRegistrations();
+  }, []);
+
+  const fetchRegistrations = async () => {
+    try {
+      const registrationsRef = collection(db, 'registrations');
+      const q = query(registrationsRef);
+      const querySnapshot = await getDocs(q);
+      const registrationsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        timestamp: new Date(doc.data().timestamp.seconds * 1000).toLocaleDateString()
+      }));
+      setUsers(registrationsData);
+    } catch (error) {
+      console.error("Error fetching registrations:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (window.confirm("Are you sure you want to delete this registration?")) {
+      try {
+        const registrationRef = doc(db, 'registrations', userId);
+        await deleteDoc(registrationRef);
+        setUsers(users.filter(user => user.id !== userId));
+      } catch (error) {
+        console.error("Error deleting registration:", error);
+      }
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (window.confirm("Are you sure you want to delete all registrations? This action cannot be undone.")) {
+      try {
+        const batch = writeBatch(db);
+        users.forEach(user => {
+          const docRef = doc(db, 'registrations', user.id);
+          batch.delete(docRef);
+        });
+        await batch.commit();
+        setUsers([]);
+      } catch (error) {
+        console.error("Error deleting all registrations:", error);
+      }
+    }
+  };
+
+  const handleEditClick = (user) => {
+    setEditingUser(user);
+  };
 
   const handleSearch = (e) => {
     const term = e.target.value.toLowerCase();
@@ -54,19 +114,26 @@ const UserDetailsTab = () => {
 
   const filteredUsers = sortedUsers.filter(
     (user) =>
-      user.username.toLowerCase().includes(searchTerm) ||
-      user.email.toLowerCase().includes(searchTerm) ||
-      user.phone.toLowerCase().includes(searchTerm)
+      user.firstn?.toLowerCase().includes(searchTerm) ||
+      user.lastn?.toLowerCase().includes(searchTerm) ||
+      user.email?.toLowerCase().includes(searchTerm) ||
+      user.phone?.toLowerCase().includes(searchTerm)
   );
 
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
 
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-bk"></div>
+    </div>;
+  }
+
   return (
     <div className="flex flex-col justify-center items-center">
       <h2 className="text-4xl mt-2 mb-6 dark:text-green-bk font-extrabold tracking-wide leading-tight">
-        Inscription Details
+        Registration Details
       </h2>
       <div className="flex gap-4 items-center">
         <div className="relative">
@@ -79,7 +146,7 @@ const UserDetailsTab = () => {
           <BiSearch className="absolute left-3 top-4 text-2xl text-gray-500" />
         </div>
         <label htmlFor="usersPerPage" className="text-lg dark:text-green-bk">
-          Users Per Page:
+          Entries Per Page:
         </label>
         <select
           id="usersPerPage"
@@ -94,7 +161,10 @@ const UserDetailsTab = () => {
           ))}
         </select>
       </div>
-      <button className="text-white mt-5 flex mr-2 items-center bg-red-500 hover:bg-red-800 p-2 rounded self-end">
+      <button 
+        onClick={handleDeleteAll}
+        className="text-white mt-5 flex mr-2 items-center bg-red-500 hover:bg-red-800 p-2 rounded self-end"
+      >
         Delete All
         <BiTrash className="ml-2" />
       </button>
@@ -119,7 +189,7 @@ const UserDetailsTab = () => {
                   ) : null}
                 </th>
               ))}
-              <th className="px-6 py-4 font-bold">Action</th>
+              <th className="px-6 py-4 font-bold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -133,10 +203,14 @@ const UserDetailsTab = () => {
                     {user[accessor]}
                   </td>
                 ))}
-                <td className="px-6 py-4 flex items-center">
+                <td className="px-6 py-4 flex items-center space-x-2">
                   <BiTrash
-                    onClick={() => handleDeleteClick(user)}
-                    className="text-red-600 ml-2 text-xl cursor-pointer"
+                    onClick={() => handleDeleteUser(user.id)}
+                    className="text-red-600 text-xl cursor-pointer"
+                  />
+                  <BiEdit
+                    onClick={() => handleEditClick(user)}
+                    className="text-blue-600 text-xl cursor-pointer"
                   />
                 </td>
               </tr>
@@ -161,6 +235,17 @@ const UserDetailsTab = () => {
           Next
         </button>
       </div>
+
+      {editingUser && (
+        <EditModal
+          user={editingUser}
+          onClose={() => setEditingUser(null)}
+          onUpdate={(updatedUser) => {
+            setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
+            setEditingUser(null);
+          }}
+        />
+      )}
     </div>
   );
 };

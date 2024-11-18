@@ -35,10 +35,8 @@ export default function AddAnEvent() {
     try {
       setIsUploading(true);
 
-      // Convert image to base64
       const base64Image = await convertImageToBase64(image);
 
-      // Create event document with base64 image
       const eventData = {
         title: newEvent.title,
         date: Timestamp.fromDate(new Date(newEvent.date)),
@@ -53,7 +51,6 @@ export default function AddAnEvent() {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
 
-      // Reset form
       setNewEvent({
         title: "",
         date: "",
@@ -62,7 +59,6 @@ export default function AddAnEvent() {
       });
       setImage(null);
 
-      // Reset file input
       const fileInput = document.querySelector('input[type="file"]');
       if (fileInput) {
         fileInput.value = "";

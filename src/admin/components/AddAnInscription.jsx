@@ -2,6 +2,7 @@ import { useState } from "react";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { db } from "../../firebase";
 import { formFields } from "../../services/Details";
+import { FaUserPlus } from "react-icons/fa";
 
 export default function AddAnInscription() {
   const [formData, setFormData] = useState({
@@ -19,10 +20,22 @@ export default function AddAnInscription() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      firstn: "",
+      lastn: "",
+      email: "",
+      phone: "",
+      academiclevel: "",
+      speciality: "",
+      faculty: "",
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -32,27 +45,19 @@ export default function AddAnInscription() {
     setSuccess(false);
 
     try {
-      await addDoc(collection(db, "registrations"), {
+      const registrationData = {
         ...formData,
         timestamp: Timestamp.now(),
-        status: 'pending'
-      });
+        status: "pending",
+      };
 
+      await addDoc(collection(db, "registrations"), registrationData);
       setSuccess(true);
-      setFormData({
-        firstn: "",
-        lastn: "",
-        email: "",
-        phone: "",
-        academiclevel: "",
-        speciality: "",
-        faculty: "",
-      });
-
+      resetForm();
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      setError("Failed to add registration. Please try again.");
       console.error("Error adding registration:", err);
+      setError("Failed to add registration. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -61,10 +66,13 @@ export default function AddAnInscription() {
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
-        <div className="dark:bg-gray-700 shadow-lg border border-emerald-100 dark:border-gray-600 dark:shadow-none shadow-emerald-300 rounded-lg p-6">
-          <h2 className="text-2xl font-bold dark:text-green-bk text-gray-900 mb-6">
-            Add New Registration
-          </h2>
+        <div className="bg-white dark:bg-gray-700 shadow-lg border border-emerald-100 dark:border-gray-600 dark:shadow-none shadow-emerald-300 rounded-lg p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold dark:text-green-bk text-gray-900">
+              Add New Registration
+            </h2>
+            <FaUserPlus className="h-6 w-6 text-green-bk" />
+          </div>
 
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -83,6 +91,9 @@ export default function AddAnInscription() {
               <div key={field.id}>
                 <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
                   {field.label}
+                  {field.required && (
+                    <span className="text-red-500 ml-1">*</span>
+                  )}
                 </label>
                 <input
                   type={field.type}
@@ -96,11 +107,18 @@ export default function AddAnInscription() {
               </div>
             ))}
 
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="px-4 py-2 border border-gray-300 dark:text-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-bk"
+              >
+                Reset
+              </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-bk hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-bk disabled:opacity-50"
+                className="px-4 py-2 bg-green-bk text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-bk disabled:opacity-50"
               >
                 {loading ? "Adding..." : "Add Registration"}
               </button>

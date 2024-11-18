@@ -1,25 +1,37 @@
-import { useState, useEffect } from 'react';
-import { collection, query, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '../firebase';
-import { Calendar, HeartHandshake, Monitor, BookOpen, Mountain } from 'lucide-react';
+import { useState, useEffect } from "react";
+import {
+  collection,
+  query,
+  getDocs,
+  orderBy,
+  Timestamp,
+} from "firebase/firestore";
+import { db } from "../firebase";
+import {
+  Calendar,
+  HeartHandshake,
+  Monitor,
+  BookOpen,
+  Mountain,
+} from "lucide-react";
 import { GrWorkshop } from "react-icons/gr";
 import { IoGameControllerOutline, IoCloseSharp } from "react-icons/io5";
-import Navbar from '../components/event/Navbar';
-import EventCard from '../components/event/EventCard';
+import Navbar from "../components/event/Navbar";
+import EventCard from "../components/event/EventCard";
 import reg from "../assets/Cvrt1.png";
 
 const categories = [
-  { id: 'all', label: 'All Events', icon: Calendar },
-  { id: 'education', label: 'Education', icon: BookOpen },
-  { id: 'charity', label: 'Charity', icon: HeartHandshake },
-  { id: 'informatique', label: 'Informatique', icon: Monitor },
-  { id: 'workshops', label: 'Workshops', icon: GrWorkshop },
-  { id: 'hiking', label: 'Hiking', icon: Mountain },
-  { id: 'games', label: 'Games', icon: IoGameControllerOutline },
+  { id: "all", label: "All", icon: Calendar },
+  { id: "education", label: "Education", icon: BookOpen },
+  { id: "charity", label: "Charity", icon: HeartHandshake },
+  { id: "informatique", label: "Informatique", icon: Monitor },
+  { id: "workshops", label: "Workshops", icon: GrWorkshop },
+  { id: "hiking", label: "Hiking", icon: Mountain },
+  { id: "games", label: "Games", icon: IoGameControllerOutline },
 ];
 
 function Event() {
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,19 +41,35 @@ function Event() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const eventsRef = collection(db, 'events');
-        const q = query(eventsRef, orderBy('date', 'asc'));
+        const eventsRef = collection(db, "events");
+        const q = query(eventsRef, orderBy("date", "desc"));
         const querySnapshot = await getDocs(q);
-        const eventsData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          date: new Date(doc.data().date.seconds * 1000).toLocaleDateString('fr-FR')
-        }));
-        setEvents(eventsData);
+        const now = Timestamp.now();
+
+        const eventsData = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          const eventDate = data.date;
+          return {
+            id: doc.id,
+            ...data,
+            date: new Date(eventDate.seconds * 1000).toLocaleDateString(
+              "fr-FR"
+            ),
+            isPast: eventDate.seconds < now.seconds,
+          };
+        });
+
+        const sortedEvents = eventsData.sort((a, b) => {
+          if (!a.isPast && b.isPast) return -1;
+          if (a.isPast && !b.isPast) return 1;
+          return b.date.localeCompare(a.date);
+        });
+
+        setEvents(sortedEvents);
         setError(null);
       } catch (err) {
-        console.error('Error fetching events:', err);
-        setError('Failed to load events. Please try again later.');
+        console.error("Error fetching events:", err);
+        setError("Failed to load events. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -51,10 +79,12 @@ function Event() {
   }, []);
 
   useEffect(() => {
-    if (selectedCategory === 'all') {
+    if (selectedCategory === "all") {
       setFilteredEvents(events);
     } else {
-      setFilteredEvents(events.filter(event => event.category === selectedCategory));
+      setFilteredEvents(
+        events.filter((event) => event.category === selectedCategory)
+      );
     }
   }, [selectedCategory, events]);
 
@@ -96,6 +126,7 @@ function Event() {
         <img
           src={reg}
           className="w-full h-64 sm:h-[400px] md:h-[600px] object-cover blur-sm"
+          alt="Events banner"
         />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-full -translate-y-1/2">
           <h1 className="uppercase text-center text-white font-semibold mb-1 text-3xl sm:text-5xl md:text-6xl lg:mb-6 lg:text-7xl">

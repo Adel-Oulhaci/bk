@@ -1,13 +1,25 @@
-import { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebase";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { FaUserShield } from "react-icons/fa";
+import logo from "../assets/logo1.png";
 
 export default function LoginPage() {
-  const [credentials, setCredentials] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
+  const [credentials, setCredentials] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [user] = useAuthState(auth);
+
+  useEffect(() => {
+    if (user) {
+      const from = location.state?.from?.pathname || "/admin";
+      navigate(from, { replace: true });
+    }
+  }, [user, navigate, location]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -16,37 +28,56 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
-      navigate('/admin');
+      await signInWithEmailAndPassword(
+        auth,
+        credentials.email,
+        credentials.password
+      );
+      const from = location.state?.from?.pathname || "/admin";
+      navigate(from, { replace: true });
     } catch (error) {
-      console.error('Login error:', error);
-      setError('Invalid email or password. Please try again.');
+      console.error("Login error:", error);
+      setError("Invalid email or password. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">Admin Sign In</h2>
-        </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-            {error}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
+      <div className="max-w-md w-full mx-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="flex flex-col items-center mb-8">
+            <img src={logo} alt="Logo" className="w-24 h-24 mb-4" />
+            <div className="flex items-center gap-2">
+              <FaUserShield className="text-green-bk text-2xl" />
+              <h2 className="text-3xl font-bold text-gray-900">
+                Admin DashBoard
+              </h2>
+            </div>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          <div className="rounded-md shadow-sm -space-y-px">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+              <p className="flex items-center">
+                <span className="mr-2">⚠️</span>
+                {error}
+              </p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email-address" className="sr-only">Email address</label>
+              <label
+                htmlFor="email-address"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Email Address
+              </label>
               <input
                 id="email-address"
                 name="email"
@@ -55,12 +86,18 @@ export default function LoginPage() {
                 required
                 value={credentials.email}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-bk focus:border-green-bk focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                className="mt-1 block w-full px-4 py-3 rounded-lg border border-gray-300 shadow-sm focus:ring-2 focus:ring-green-bk focus:border-green-bk transition-colors"
+                placeholder="admin@example.com"
               />
             </div>
+
             <div>
-              <label htmlFor="password" className="sr-only">Password</label>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Password
+              </label>
               <input
                 id="password"
                 name="password"
@@ -69,22 +106,46 @@ export default function LoginPage() {
                 required
                 value={credentials.password}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-green-bk focus:border-green-bk focus:z-10 sm:text-sm"
-                placeholder="Password"
+                className="mt-1 block w-full px-4 py-3 rounded-lg border border-gray-300 shadow-sm focus:ring-2 focus:ring-green-bk focus:border-green-bk transition-colors"
+                placeholder="••••••••"
               />
             </div>
-          </div>
 
-          <div>
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-bk hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-bk disabled:opacity-50"
+              className="w-full flex justify-center py-3 px-4 rounded-lg text-white bg-green-bk hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-bk transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? (
+                <div className="flex items-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Signing in...
+                </div>
+              ) : (
+                "Sign In"
+              )}
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,12 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from './firebase';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "./firebase";
 import Layout from "./components/shared/Layout";
 import Home from "./pages/Home";
 import Inscription from "./pages/Inscription";
@@ -16,15 +22,18 @@ import Login from "./pages/Login";
 
 const ProtectedRoute = ({ children }) => {
   const [user, loading] = useAuthState(auth);
+  const location = useLocation();
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-bk"></div>
-    </div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-bk"></div>
+      </div>
+    );
   }
 
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;
@@ -34,6 +43,7 @@ function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/login" element={<Login />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="about" element={<About />} />
@@ -41,13 +51,15 @@ function App() {
           <Route path="history" element={<History />} />
           <Route path="team" element={<Team />} />
           <Route path="inscription/:eventId" element={<Inscription />} />
-          <Route path="login" element={<Login />} />
         </Route>
-        <Route path="/admin" element={
-          <ProtectedRoute>
-            <AdminLayout />
-          </ProtectedRoute>
-        }>
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<AdminPage />} />
           <Route path="addaninscription" element={<AddAnInscription />} />
           <Route path="addanevent" element={<AddAnEvent />} />

@@ -1,9 +1,17 @@
 import { useState, useEffect } from "react";
-import { collection, query, getDocs, deleteDoc, doc, writeBatch } from 'firebase/firestore';
-import { db } from '../../firebase';
+import {
+  collection,
+  query,
+  getDocs,
+  deleteDoc,
+  doc,
+  writeBatch,
+} from "firebase/firestore";
+import { db } from "../../firebase";
 import { BiSearch, BiTrash, BiEdit } from "react-icons/bi";
 import { IoMdArrowDropup, IoMdArrowDropdown } from "react-icons/io";
 import EditModal from "./EditModal";
+import DeleteModal from "./DeleteModal";
 
 const UserDetailsTab = () => {
   const [users, setUsers] = useState([]);
@@ -16,6 +24,11 @@ const UserDetailsTab = () => {
     key: "timestamp",
     direction: "descending",
   });
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState(null);
+  const [deleteUserName, setDeleteUserName] = useState("");
+  const [isDeleteAll, setIsDeleteAll] = useState(false);
 
   const columns = [
     { Header: "First Name", accessor: "firstn" },
@@ -33,13 +46,15 @@ const UserDetailsTab = () => {
 
   const fetchRegistrations = async () => {
     try {
-      const registrationsRef = collection(db, 'registrations');
+      const registrationsRef = collection(db, "registrations");
       const q = query(registrationsRef);
       const querySnapshot = await getDocs(q);
-      const registrationsData = querySnapshot.docs.map(doc => ({
+      const registrationsData = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-        timestamp: new Date(doc.data().timestamp.seconds * 1000).toLocaleDateString()
+        timestamp: new Date(
+          doc.data().timestamp.seconds * 1000
+        ).toLocaleDateString(),
       }));
       setUsers(registrationsData);
     } catch (error) {
@@ -49,24 +64,24 @@ const UserDetailsTab = () => {
     }
   };
 
-  const handleDeleteUser = async (userId) => {
-    if (window.confirm("Are you sure you want to delete this registration?")) {
-      try {
-        const registrationRef = doc(db, 'registrations', userId);
-        await deleteDoc(registrationRef);
-        setUsers(users.filter(user => user.id !== userId));
-      } catch (error) {
-        console.error("Error deleting registration:", error);
-      }
-    }
+  const handleDeleteUser = (userId, userName) => {
+    setDeleteUserId(userId);
+    setDeleteUserName(userName);
+    setIsModalOpen(true);
+    setIsDeleteAll(false);
   };
 
-  const handleDeleteAll = async () => {
-    if (window.confirm("Are you sure you want to delete all registrations? This action cannot be undone.")) {
+  const handleDeleteAll = () => {
+    setIsModalOpen(true);
+    setIsDeleteAll(true);
+  };
+
+  const confirmDelete = async () => {
+    if (isDeleteAll) {
       try {
         const batch = writeBatch(db);
-        users.forEach(user => {
-          const docRef = doc(db, 'registrations', user.id);
+        users.forEach((user) => {
+          const docRef = doc(db, "registrations", user.id);
           batch.delete(docRef);
         });
         await batch.commit();
@@ -74,7 +89,20 @@ const UserDetailsTab = () => {
       } catch (error) {
         console.error("Error deleting all registrations:", error);
       }
+    } else if (deleteUserId) {
+      try {
+        const registrationRef = doc(db, "registrations", deleteUserId);
+        await deleteDoc(registrationRef);
+        setUsers(users.filter((user) => user.id !== deleteUserId));
+      } catch (error) {
+        console.error("Error deleting registration:", error);
+      }
     }
+    setIsModalOpen(false);
+  };
+
+  const cancelDelete = () => {
+    setIsModalOpen(false);
   };
 
   const handleEditClick = (user) => {
@@ -125,9 +153,11 @@ const UserDetailsTab = () => {
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-bk"></div>
-    </div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-bk"></div>
+      </div>
+    );
   }
 
   return (
@@ -161,7 +191,7 @@ const UserDetailsTab = () => {
           ))}
         </select>
       </div>
-      <button 
+      <button
         onClick={handleDeleteAll}
         className="text-white mt-5 flex mr-2 items-center bg-red-500 hover:bg-red-800 p-2 rounded self-end"
       >
@@ -205,12 +235,14 @@ const UserDetailsTab = () => {
                 ))}
                 <td className="px-6 py-4 flex items-center space-x-2">
                   <BiTrash
-                    onClick={() => handleDeleteUser(user.id)}
+                    onClick={() =>
+                      handleDeleteUser(user.id, `${user.firstn} ${user.lastn}`)
+                    } // Pass user's full name here
                     className="text-red-600 text-xl cursor-pointer"
                   />
                   <BiEdit
                     onClick={() => handleEditClick(user)}
-                    className="text-blue-600 text-xl cursor-pointer"
+                    className="text-yellow-600 text-xl cursor-pointer"
                   />
                 </td>
               </tr>
@@ -218,6 +250,18 @@ const UserDetailsTab = () => {
           </tbody>
         </table>
       </div>
+
+      <DeleteModal
+        isOpen={isModalOpen}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        message={
+          isDeleteAll
+            ? "Are you sure you want to delete all registrations?"
+            : `Are you sure you want to delete the registration for ${deleteUserName}?`
+        }
+      />
+
       <div className="pagination flex flex-row mt-5">
         <button
           className="block rounded-lg bg-gradient-to-tr from-emerald-800 to-green-bk py-2 px-4 text-sm font-bold text-white shadow-md hover:shadow-lg active:opacity-85 disabled:opacity-50"
@@ -241,7 +285,9 @@ const UserDetailsTab = () => {
           user={editingUser}
           onClose={() => setEditingUser(null)}
           onUpdate={(updatedUser) => {
-            setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
+            setUsers(
+              users.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+            );
             setEditingUser(null);
           }}
         />

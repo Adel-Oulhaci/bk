@@ -1,7 +1,14 @@
-import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { collection, doc, getDoc, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import {
+  collection,
+  doc,
+  getDoc,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
+import { db } from "../firebase";
 import FormRegister from "../components/FormRegister";
 
 export default function Inscription() {
@@ -18,7 +25,7 @@ export default function Inscription() {
           return;
         }
 
-        const eventDoc = await getDoc(doc(db, 'events', eventId));
+        const eventDoc = await getDoc(doc(db, "events", eventId));
         if (!eventDoc.exists()) {
           setError("Event not found");
           return;
@@ -27,10 +34,12 @@ export default function Inscription() {
         setEvent({
           id: eventDoc.id,
           ...eventDoc.data(),
-          date: new Date(eventDoc.data().date.seconds * 1000).toLocaleDateString()
+          date: new Date(
+            eventDoc.data().date.seconds * 1000
+          ).toLocaleDateString(),
         });
       } catch (err) {
-        console.error('Error fetching event:', err);
+        console.error("Error fetching event:", err);
         setError("Failed to load event details");
       } finally {
         setLoading(false);
@@ -62,15 +71,18 @@ export default function Inscription() {
   return (
     <>
       <div className="relative">
-        <img src={event.image} className="w-full h-64 sm:h-[400px] md:h-[600px] object-cover blur-sm" />
+        <img
+          src={event.image}
+          className="w-full h-64 sm:h-[400px] md:h-[600px] object-cover blur-sm"
+        />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-full -translate-y-1/2">
-          <h1 className="uppercase text-center text-white font-semibold mb-1 sm:text-6xl md:text-7xl lg:mb-6 text-xl lg:text-8xl">
+          <h1 className="uppercase text-center text-green-bk font-semibold mb-1 sm:text-6xl md:text-7xl lg:mb-6 text-xl lg:text-8xl">
             {event.title}
           </h1>
-          <h3 className="text-center text-white sm:text-5xl md:text-6xl font-semibold text-lg lg:text-6xl">
+          <h3 className="text-center text-green-bk sm:text-5xl md:text-6xl font-semibold text-lg lg:text-6xl">
             Registration Form
           </h3>
-          <p className="text-center text-white mt-4 text-xl">
+          <p className="text-center text-green-bk mt-4 text-xl">
             Event Date: {event.date}
           </p>
         </div>

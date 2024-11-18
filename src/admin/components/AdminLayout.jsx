@@ -38,7 +38,10 @@ export default function AdminLayout() {
           darkMode={darkMode}
           toggleSideBar={toggleSideBar}
         />
-        <SideBar isSideBarOpen={isSideBarOpen} />
+        <SideBar
+          isSideBarOpen={isSideBarOpen}
+          setIsSideBarOpen={setIsSideBarOpen}
+        />
       </div>
       <div className="mt-14 dark:text-gray-50 text-gray-900 h-full p-4 sm:ml-64 bg-gray-50 dark:bg-gray-800 translate-all duration-200">
         <Outlet />

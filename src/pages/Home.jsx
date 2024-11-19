@@ -16,6 +16,7 @@ import { IoChevronBackOutline, IoChevronForwardOutline } from "react-icons/io5";
 export default function Home() {
   const [lastEvents, setLastEvents] = useState([]);
   const [nextEvent, setNextEvent] = useState(null);
+  const [currentEvent, setCurrentEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -25,23 +26,70 @@ export default function Home() {
         const eventsRef = collection(db, "events");
         const now = Timestamp.now();
 
+        // Calculate current event's end date (date + duration in days)
+        const currentEventQuery = query(
+          eventsRef,
+          where("date", "<=", now),
+          orderBy("date", "desc"),
+          limit(1)
+        );
+        const currentEventSnapshot = await getDocs(currentEventQuery);
+        
+        let currentEventToAdd = null;
+
+        if (!currentEventSnapshot.empty) {
+          const eventData = currentEventSnapshot.docs[0].data();
+          const startDate = new Date(eventData.date.seconds * 1000);
+          const endDate = new Date(startDate);
+          endDate.setDate(startDate.getDate() + eventData.duration);
+          
+          // Only set as current event if it hasn't ended yet
+          if (endDate > new Date()) {
+            const currentEventData = {
+              id: currentEventSnapshot.docs[0].id,
+              ...eventData,
+              date: startDate.toLocaleDateString('fr-FR'),
+              endDate: endDate
+            };
+            setCurrentEvent(currentEventData);
+            currentEventToAdd = null; // Reset currentEventToAdd since it's a current event
+          } else {
+            // If event has ended, prepare it to be added to lastEvents
+            currentEventToAdd = {
+              id: currentEventSnapshot.docs[0].id,
+              ...eventData,
+              date: startDate.toLocaleDateString('fr-FR')
+            };
+          }
+        }
+
+        // Fetch last events, excluding current event if it exists
         const lastEventsQuery = query(
           eventsRef,
           where("date", "<", now),
           orderBy("date", "desc"),
-          limit(5)
+          limit(currentEventToAdd ? 5 : 6)
         );
         const lastEventsSnapshot = await getDocs(lastEventsQuery);
-        const lastEventsData = lastEventsSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          date: new Date(doc.data().date.seconds * 1000).toLocaleDateString(),
-        }));
+        let lastEventsData = lastEventsSnapshot.docs
+          .filter(doc => !currentEvent || doc.id !== currentEvent.id) // Exclude current event
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            date: new Date(doc.data().date.seconds * 1000).toLocaleDateString('fr-FR'),
+          }));
+
+        // Add the ended current event to lastEvents if it exists
+        if (currentEventToAdd) {
+          lastEventsData = [currentEventToAdd, ...lastEventsData.slice(0, -1)];
+        }
+
         setLastEvents(lastEventsData);
 
+        // Fetch next event (events with start date after now)
         const nextEventQuery = query(
           eventsRef,
-          where("date", ">=", now),
+          where("date", ">", now),
           orderBy("date", "asc"),
           limit(1)
         );
@@ -52,7 +100,7 @@ export default function Home() {
             ...nextEventSnapshot.docs[0].data(),
             date: new Date(
               nextEventSnapshot.docs[0].data().date.seconds * 1000
-            ).toLocaleDateString(),
+            ).toLocaleDateString('fr-FR'),
           };
           setNextEvent(nextEventData);
         }
@@ -64,6 +112,10 @@ export default function Home() {
     };
 
     fetchEvents();
+
+    // Check event status every minute
+    const interval = setInterval(fetchEvents, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   const nextSlide = () => {
@@ -99,6 +151,41 @@ export default function Home() {
           </h3>
         </div>
       </div>
+
+      {currentEvent && (
+        <div className="px-4 sm:mx-12 md:mx-24 my-10 md:my-24 lg:my-32">
+          <h1 className="text-3xl lg:text-4xl mb-6 text-center font-medium lg:font-semibold">
+            Current Event
+          </h1>
+          <div className="flex flex-col md:flex-row gap-4 lg:gap-20 justify-evenly items-center">
+            <div className="relative w-48 sm:w-72 md:w-96 lg:w-[34rem] mt-5 sm:mt-2">
+              <div className="absolute w-full h-full rounded-tl-lg rounded-br-lg border border-1 border-dark-one7 left-4 top-4 z-0"></div>
+              <img
+                src={currentEvent.image}
+                className="w-full h-auto object-cover rounded-tl-lg rounded-br-lg z-10 relative"
+                alt={currentEvent.title}
+              />
+            </div>
+            <div className="text-center mt-5 md:mt-0 md:w-1/2 md:text-start">
+              <h1 className="text-lg sm:text-3xl text-green-bk lg:text-5xl pb-5">
+                {currentEvent.title}
+              </h1>
+              <h4 className="text-md sm:text-xl tlg:text-3xl pb-5 text-gray-400">
+                {currentEvent.date}
+              </h4>
+              <p className="text-gray-600 text-sm sm:text-base mb-6">
+                {currentEvent.description}
+              </p>
+              <Link
+                to={`/inscription/${currentEvent.id}`}
+                className="bg-green-bk text-white font-semibold px-6 py-3 rounded-lg hover:bg-[#148563] transition"
+              >
+                Register Now
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {nextEvent && (
         <div className="px-4 sm:mx-12 md:mx-24 my-10 md:my-24 lg:my-32">

@@ -5,6 +5,7 @@ import {
   getDocs,
   orderBy,
   Timestamp,
+  where,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import {
@@ -42,9 +43,13 @@ function Event() {
     const fetchEvents = async () => {
       try {
         const eventsRef = collection(db, "events");
-        const q = query(eventsRef, orderBy("date", "desc"));
-        const querySnapshot = await getDocs(q);
         const now = Timestamp.now();
+        const q = query(
+          eventsRef,
+          where("date", "<=", now),
+          orderBy("date", "desc")
+        );
+        const querySnapshot = await getDocs(q);
 
         const eventsData = querySnapshot.docs.map((doc) => {
           const data = doc.data();
@@ -55,13 +60,11 @@ function Event() {
             date: new Date(eventDate.seconds * 1000).toLocaleDateString(
               "fr-FR"
             ),
-            isPast: eventDate.seconds < now.seconds,
+            isPast: false,
           };
         });
 
         const sortedEvents = eventsData.sort((a, b) => {
-          if (!a.isPast && b.isPast) return -1;
-          if (a.isPast && !b.isPast) return 1;
           return b.date.localeCompare(a.date);
         });
 

@@ -1,7 +1,14 @@
 import { useState } from "react";
-import { collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase';
-import QRCode from 'qrcode';
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  Timestamp,
+} from "firebase/firestore";
+import { db } from "../firebase";
+import QRCode from "qrcode";
 import { formFields } from "../services/Details";
 
 const FormRegister = ({ eventId }) => {
@@ -19,7 +26,7 @@ const FormRegister = ({ eventId }) => {
   const [showModal, setShowModal] = useState(false);
   const [qrCode, setQrCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(""); // Error state to store error message
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,7 +37,7 @@ const FormRegister = ({ eventId }) => {
   };
 
   const downloadQRCode = () => {
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = qrCode;
     link.download = `${formData.firstn}-${formData.lastn}-qrcode.png`;
     document.body.appendChild(link);
@@ -39,52 +46,44 @@ const FormRegister = ({ eventId }) => {
   };
 
   const checkExistingRegistration = async () => {
-    const registrationsRef = collection(db, 'registrations');
-    
+    const registrationsRef = collection(db, "registrations");
+
     const emailQuery = query(
-      registrationsRef, 
-      where('eventId', '==', eventId),
-      where('email', '==', formData.email)
+      registrationsRef,
+      where("eventId", "==", eventId),
+      where("email", "==", formData.email)
     );
     const emailSnapshot = await getDocs(emailQuery);
     if (!emailSnapshot.empty) {
-      throw new Error('This email is already registered for this event');
+      throw new Error("This email is already registered for this event");
     }
 
     const nameQuery = query(
       registrationsRef,
-      where('eventId', '==', eventId),
-      where('firstn', '==', formData.firstn),
-      where('lastn', '==', formData.lastn)
+      where("eventId", "==", eventId),
+      where("firstn", "==", formData.firstn),
+      where("lastn", "==", formData.lastn)
     );
     const nameSnapshot = await getDocs(nameQuery);
     if (!nameSnapshot.empty) {
-      throw new Error('This name is already registered for this event');
+      throw new Error("This name is already registered for this event");
     }
   };
 
-  const generateQRCode = async (registrationData) => {
+  const generateQRCode = async (registrationId) => {
     try {
-      const qrData = JSON.stringify({
-        registrationId: registrationData.id,
-        name: `${registrationData.firstn} ${registrationData.lastn}`,
-        email: registrationData.email,
-        eventId: registrationData.eventId,
-        timestamp: registrationData.timestamp
-      });
-      
-      const qrCodeImage = await QRCode.toDataURL(qrData);
+      const qrCodeImage = await QRCode.toDataURL(registrationId);
       return qrCodeImage;
     } catch (err) {
-      console.error('Error generating QR code:', err);
-      throw new Error('Failed to generate QR code');
+      console.error("Error generating QR code:", err);
+      throw new Error("Failed to generate QR code");
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError(""); // Reset error state
 
     try {
       await checkExistingRegistration();
@@ -93,23 +92,25 @@ const FormRegister = ({ eventId }) => {
         ...formData,
         eventId,
         timestamp: Timestamp.now(),
-        status: 'pending'
+        status: "pending",
       };
 
-      const docRef = await addDoc(collection(db, 'registrations'), registrationData);
-      
-      const qrCodeImage = await generateQRCode({
-        id: docRef.id,
-        ...registrationData
-      });
+      const docRef = await addDoc(
+        collection(db, "registrations"),
+        registrationData
+      );
 
-      await addDoc(collection(db, 'registrations', docRef.id, 'qrcodes'), {
+      const qrCodeImage = await generateQRCode(docRef.id);
+
+      await addDoc(collection(db, "registrations", docRef.id, "qrcodes"), {
         code: qrCodeImage,
-        createdAt: Timestamp.now()
+        createdAt: Timestamp.now(),
       });
 
       setQrCode(qrCodeImage);
-      setMessage("Registration successful! Your QR code has been generated and downloaded.");
+      setMessage(
+        "Registration successful! Your QR code has been generated and downloaded."
+      );
       setShowModal(true);
       downloadQRCode();
 
@@ -124,10 +125,11 @@ const FormRegister = ({ eventId }) => {
       });
     } catch (err) {
       setError(err.message || "Registration failed. Please try again.");
-    } finally { 
+      setShowModal(true); // Show modal with error message
+    } finally {
       setLoading(false);
     }
-  }; 
+  };
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-4">
@@ -137,12 +139,6 @@ const FormRegister = ({ eventId }) => {
       <p className="text-center text-gray-600 mb-8">
         to participate in this event.
       </p>
-
-      {error && (
-        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-          {error}
-        </div>
-      )}
 
       <form
         onSubmit={handleSubmit}
@@ -193,11 +189,21 @@ const FormRegister = ({ eventId }) => {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-            <h3 className="text-xl font-semibold text-green-bk mb-4">Registration Successful!</h3>
-            <p className="text-gray-600 mb-4">{message}</p>
-            {qrCode && (
+            <h3
+              className={`text-xl font-semibold mb-4 ${
+                error ? "text-red-500" : "text-green-bk"
+              }`}
+            >
+              {error ? "⚠️ Registration Failed" : "Registration Successful!"}
+            </h3>
+            <p className={`text-gray-600 mb-4 `}>{error || message}</p>
+            {qrCode && !error && (
               <div className="flex flex-col items-center mb-4">
-                <img src={qrCode} alt="Registration QR Code" className="w-48 h-48 mb-4" />
+                <img
+                  src={qrCode}
+                  alt="Registration QR Code"
+                  className="w-48 h-48 mb-4"
+                />
                 <button
                   onClick={downloadQRCode}
                   className="bg-green-bk text-white font-semibold px-4 py-2 rounded-lg hover:bg-[#148563] transition mb-4"

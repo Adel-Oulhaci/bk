@@ -6,6 +6,9 @@ import {
   deleteDoc,
   doc,
   writeBatch,
+  where,
+  orderBy,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "../../firebase";
 import { BiSearch, BiTrash, BiEdit } from "react-icons/bi";
@@ -15,11 +18,14 @@ import DeleteModal from "./DeleteModal";
 
 const UserDetailsTab = () => {
   const [users, setUsers] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage, setUsersPerPage] = useState(10);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null);
+  const [showPastEvents, setShowPastEvents] = useState(false);
   const [sortConfig, setSortConfig] = useState({
     key: "timestamp",
     direction: "descending",
@@ -41,13 +47,47 @@ const UserDetailsTab = () => {
   ];
 
   useEffect(() => {
-    fetchRegistrations();
+    fetchEvents();
   }, []);
+
+  useEffect(() => {
+    if (selectedEvent) {
+      fetchRegistrations();
+    }
+  }, [selectedEvent]);
+
+  const fetchEvents = async () => {
+    try {
+      const eventsRef = collection(db, "events");
+      const q = query(eventsRef, orderBy("date", "desc"));
+      const querySnapshot = await getDocs(q);
+      const now = Timestamp.now();
+
+      const eventsData = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        date: new Date(doc.data().date.seconds * 1000),
+        isPast: doc.data().date.seconds < now.seconds,
+      }));
+
+      setEvents(eventsData);
+      // Set the first upcoming event as default
+      const upcomingEvent = eventsData.find((event) => !event.isPast);
+      if (upcomingEvent) {
+        setSelectedEvent(upcomingEvent);
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    }
+  };
 
   const fetchRegistrations = async () => {
     try {
       const registrationsRef = collection(db, "registrations");
-      const q = query(registrationsRef);
+      const q = query(
+        registrationsRef,
+        where("eventId", "==", selectedEvent.id)
+      );
       const querySnapshot = await getDocs(q);
       const registrationsData = querySnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -122,6 +162,15 @@ const UserDetailsTab = () => {
     setCurrentPage(1);
   };
 
+  const handleEventChange = (event) => {
+    setSelectedEvent(event);
+    setCurrentPage(1);
+  };
+
+  const togglePastEvents = () => {
+    setShowPastEvents(!showPastEvents);
+  };
+
   const requestSort = (key) => {
     let direction = "ascending";
     if (sortConfig.key === key && sortConfig.direction === "ascending") {
@@ -129,6 +178,10 @@ const UserDetailsTab = () => {
     }
     setSortConfig({ key, direction });
   };
+
+  const filteredEvents = showPastEvents
+    ? events.filter((event) => event.isPast)
+    : events.filter((event) => !event.isPast);
 
   const sortedUsers = [...users].sort((a, b) => {
     if (a[sortConfig.key] < b[sortConfig.key]) {
@@ -147,7 +200,7 @@ const UserDetailsTab = () => {
       user.email?.toLowerCase().includes(searchTerm) ||
       user.phone?.toLowerCase().includes(searchTerm)
   );
-
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
@@ -165,6 +218,34 @@ const UserDetailsTab = () => {
       <h2 className="text-4xl mt-2 mb-6 dark:text-green-bk font-extrabold tracking-wide leading-tight">
         Registration Details
       </h2>
+
+      <div className="w-full max-w-4xl mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 justify-between items-center mb-4">
+          <button
+            onClick={togglePastEvents}
+            className={`px-4 py-2 rounded-lg ${
+              showPastEvents
+                ? "bg-gray-600 text-white"
+                : "bg-green-bk text-white"
+            }`}
+          >
+            {showPastEvents ? "Show Upcoming Events" : "Show Past Events"}
+          </button>
+          <select
+            className="p-2 border rounded-lg dark:bg-gray-700 dark:text-white"
+            onChange={(e) => handleEventChange(JSON.parse(e.target.value))}
+            value={selectedEvent ? JSON.stringify(selectedEvent) : ""}
+          >
+            <option value="">Select an event</option>
+            {filteredEvents.map((event) => (
+              <option key={event.id} value={JSON.stringify(event)}>
+                {event.title} - {new Date(event.date).toLocaleDateString()}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div className="flex gap-4 items-center">
         <div className="relative">
           <input
@@ -191,65 +272,74 @@ const UserDetailsTab = () => {
           ))}
         </select>
       </div>
-      <button
-        onClick={handleDeleteAll}
-        className="text-white mt-5 flex mr-2 items-center bg-red-500 hover:bg-red-800 p-2 rounded self-end"
-      >
-        Delete All
-        <BiTrash className="ml-2" />
-      </button>
-      <div className="w-full mt-4 overflow-x-auto">
-        <table className="w-full bg-white border border-gray-200 divide-y divide-gray-200">
-          <thead className="bg-green-bk dark:text-gray-900">
-            <tr>
-              {columns.map(({ accessor, Header }) => (
-                <th
-                  key={accessor}
-                  scope="col"
-                  className="px-6 py-4 font-bold cursor-pointer"
-                  onClick={() => requestSort(accessor)}
-                >
-                  {Header}
-                  {sortConfig.key === accessor ? (
-                    sortConfig.direction === "ascending" ? (
-                      <IoMdArrowDropup className="inline" />
-                    ) : (
-                      <IoMdArrowDropdown className="inline" />
-                    )
-                  ) : null}
-                </th>
-              ))}
-              <th className="px-6 py-4 font-bold">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentUsers.map((user) => (
-              <tr
-                key={user.id}
-                className="hover:bg-[#42c9b7] bg-[#7eddd1] dark:text-gray-800"
-              >
-                {columns.map(({ accessor }) => (
-                  <td key={accessor} className="px-6 py-4">
-                    {user[accessor]}
-                  </td>
+
+      {selectedEvent && (
+        <button
+          onClick={handleDeleteAll}
+          className="text-white mt-5 flex mr-2 items-center bg-red-500 hover:bg-red-800 p-2 rounded self-end"
+        >
+          Delete All
+          <BiTrash className="ml-2" />
+        </button>
+      )}
+
+      {selectedEvent && (
+        <div className="w-full mt-4 overflow-x-auto">
+          <table className="w-full bg-white border border-gray-200 divide-y divide-gray-200">
+            <thead className="bg-green-bk dark:text-gray-900">
+              <tr>
+                {columns.map(({ accessor, Header }) => (
+                  <th
+                    key={accessor}
+                    scope="col"
+                    className="px-6 py-4 font-bold cursor-pointer"
+                    onClick={() => requestSort(accessor)}
+                  >
+                    {Header}
+                    {sortConfig.key === accessor ? (
+                      sortConfig.direction === "ascending" ? (
+                        <IoMdArrowDropup className="inline" />
+                      ) : (
+                        <IoMdArrowDropdown className="inline" />
+                      )
+                    ) : null}
+                  </th>
                 ))}
-                <td className="px-6 py-4 flex items-center space-x-2">
-                  <BiTrash
-                    onClick={() =>
-                      handleDeleteUser(user.id, `${user.firstn} ${user.lastn}`)
-                    } // Pass user's full name here
-                    className="text-red-600 text-xl cursor-pointer"
-                  />
-                  <BiEdit
-                    onClick={() => handleEditClick(user)}
-                    className="text-yellow-600 text-xl cursor-pointer"
-                  />
-                </td>
+                <th className="px-6 py-4 font-bold">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {currentUsers.map((user) => (
+                <tr
+                  key={user.id}
+                  className="hover:bg-[#42c9b7] bg-[#7eddd1] dark:text-gray-800"
+                >
+                  {columns.map(({ accessor }) => (
+                    <td key={accessor} className="px-6 py-4">
+                      {user[accessor]}
+                    </td>
+                  ))}
+                  <td className="px-6 py-4 flex items-center space-x-2">
+                    <BiTrash
+                      onClick={() =>
+                        handleDeleteUser(
+                          user.id,
+                          `${user.firstn} ${user.lastn}`
+                        )
+                      }
+                      className="text-red-600 text-xl cursor-pointer"
+                    />
+                    <BiEdit
+                      onClick={() => handleEditClick(user)}
+                      className="text-yellow-600 text-xl cursor-pointer"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <DeleteModal
         isOpen={isModalOpen}
@@ -270,7 +360,9 @@ const UserDetailsTab = () => {
         >
           Previous
         </button>
-        <span className="text-lg mx-2">Page {currentPage}</span>
+        <span className="text-lg mx-2">
+          Page {currentPage} of {totalPages}
+        </span>
         <button
           className="block rounded-lg bg-gradient-to-tr from-emerald-800 to-green-bk py-2 px-4 text-sm font-bold text-white shadow-md hover:shadow-lg active:opacity-85 disabled:opacity-50"
           disabled={indexOfLastUser >= filteredUsers.length}

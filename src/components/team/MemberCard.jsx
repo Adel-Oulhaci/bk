@@ -7,7 +7,7 @@ export function MemberCard({ image, name, role, date, variant = "default" }) {
             <img
               src={image}
               alt={name}
-              className="w-full h-full object-cover"
+              className="w-full object-cover"
             />
           </div>
           <div className="text-center text-white">

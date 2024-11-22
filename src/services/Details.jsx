@@ -6,6 +6,20 @@ import join from "../assets/join.png";
 import slogin from "../assets/slogin.png";
 import who from "../assets/who.png";
 import where from "../assets/where.png";
+import presedent from "../assets/members/presedent.png";
+import VP from "../assets/members/VP.png";
+import SG from "../assets/members/SG.png";
+import finance from "../assets/members/finance.png";
+import media from "../assets/members/media.png";
+import program from "../assets/members/program.png";
+import relation from "../assets/members/relation.png";
+import tools from "../assets/members/tools.png";
+import hadjer from "../assets/members/hadjer.jpg";
+import fatima_ben from "../assets/members/fatima_ben.jpg";
+import yasser from "../assets/members/yasser.jpg";
+import najwa from "../assets/members/najwa.jpg";
+
+
 
 export const formFields = [
   {
@@ -79,7 +93,7 @@ export const ABOUT = [
   id: "1",
   title: "What is",
   titleGreen: "BADRAT KHAYR Club?",
-  description: "BADRAT KHAYR Club is a scientific and cultural club of a charitable nature that was established on October 17, 2019, includes members from different disciplines Since its inception, the club has been active in various fields where he carried out various voluntary activities for the benefit of various segments of society.",
+  description: "BADRAT KHAYR Club is a scientific and cultural club of a charitable nature that was established on October 17, 2019, includes memberss from different disciplines Since its inception, the club has been active in various fields where he carried out various voluntary activities for the benefit of various segments of society.",
   img: who
 },
 {
@@ -98,98 +112,81 @@ export const ABOUT = [
   id: "4",
   title: "How do I join",
   titleGreen: "the club?",
-  description: "With the beginning of each new year for the club, registrations for joining the club are opened, where new members are selected by evaluating them and knowing their level and skills required.",
+  description: "With the beginning of each new year for the club, registrations for joining the club are opened, where new memberss are selected by evaluating them and knowing their level and skills required.",
   img: join
 }
 ];
  export const responsables = [
   {
-    name: "ANES GHALEM",
+    name: "GHALEM Anes",
     role: "Media Manager",
-    image:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&h=200&fit=crop",
+    image:media,
     date: "Depuis Nov 2023",
   },
   {
-    name: "ABDELLATIF FERILA ZAZOU",
+    name: "FERKA ZAZOU Abdellatif",
     role: "President",
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&h=200&fit=crop",
+    image:presedent,
     date: "Depuis Nov 2023",
   },
   {
-    name: "ANES GHALEM",
+    name: "DERRAR Batoul",
+    role: "Relation",
+    image:relation,
+    date: "Depuis Nov 2023",
+  },
+  {
+    name: "TOU Achwak",
     role: "Media Manager",
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&h=200&fit=crop",
+    image:SG,
     date: "Depuis Nov 2023",
   },
   {
-    name: "ANES GHALEM",
-    role: "Media Manager",
-    image:
-      "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?q=80&w=200&h=200&fit=crop",
+    name: "Achour aoul Fatima",
+    role: "Vice President",
+    image:VP,
     date: "Depuis Nov 2023",
   },
   {
-    name: "KAWTHER CHAMARA",
+    name: "OUAMARA Kawther",
     role: "Program & Events",
-    image:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200&h=200&fit=crop",
+    image:program,
     date: "Depuis Nov 2023",
   },
   {
-    name: "DJILLALI SAIM",
+    name: "DJILLALI Saim",
     role: "Tech & Development",
-    image:
-      "https://images.unsplash.com/photo-1463453091185-61582044d556?q=80&w=200&h=200&fit=crop",
+    image:tools,
     date: "Depuis Nov 2023",
   },
   {
-    name: "ANES GHALEM",
-    role: "Media Manager",
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&h=200&fit=crop",
+    name: "Youcefi Zuaouia",
+    role: "Finance",
+    image:finance,
     date: "Depuis Nov 2023",
   },
 ];
 
 export const members = [
   {
-    name: "ANES GHALEM",
+    name: " Fatima",
     role: "Finalizer",
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&h=200&fit=crop",
+    image: fatima_ben,
   },
   {
-    name: "ANES GHALEM",
+    name: "Derrar Yasser",
     role: "Finalizer",
-    image:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&h=200&fit=crop",
+    image: yasser,
   },
   {
-    name: "ANES GHALEM",
+    name: "MAHIEDDINE Hadjer",
     role: "Finalizer",
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&h=200&fit=crop",
+    image: hadjer,
   },
   {
-    name: "ANES GHALEM",
+    name: " Najwa",
     role: "Finalizer",
-    image:
-      "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?q=80&w=200&h=200&fit=crop",
-  },
-  {
-    name: "ANES GHALEM",
-    role: "Finalizer",
-    image:
-      "https://images.unsplash.com/photo-1463453091185-61582044d556?q=80&w=200&h=200&fit=crop",
-  },
-  {
-    name: "ANES GHALEM",
-    role: "Finalizer",
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&h=200&fit=crop",
+    image: najwa,
   },
 ];
 

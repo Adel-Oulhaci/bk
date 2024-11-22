@@ -11,14 +11,17 @@ import {
 import { db } from "../firebase";
 import { Link } from "react-router-dom";
 import home from "../assets/home.png";
-import { IoChevronBackOutline, IoChevronForwardOutline } from "react-icons/io5";
 
 export default function Home() {
-  const [lastEvents, setLastEvents] = useState([]);
+  const [lastEvent, setLastEvent] = useState(null);
   const [nextEvent, setNextEvent] = useState(null);
   const [currentEvent, setCurrentEvent] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [stats, setStats] = useState({
+    totalMembers: 0,
+    totalEvents: 0,
+    totalSubscribed: 0
+  });
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -63,28 +66,33 @@ export default function Home() {
           }
         }
 
-        // Fetch last events, excluding current event if it exists
-        const lastEventsQuery = query(
+        // Fetch last event that has ended (considering duration)
+        const lastEventQuery = query(
           eventsRef,
           where("date", "<", now),
-          orderBy("date", "desc"),
-          limit(currentEventToAdd ? 5 : 6)
+          orderBy("date", "desc")
         );
-        const lastEventsSnapshot = await getDocs(lastEventsQuery);
-        let lastEventsData = lastEventsSnapshot.docs
-          .filter(doc => !currentEvent || doc.id !== currentEvent.id) // Exclude current event
-          .map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-            date: new Date(doc.data().date.seconds * 1000).toLocaleDateString('fr-FR'),
-          }));
-
-        // Add the ended current event to lastEvents if it exists
-        if (currentEventToAdd) {
-          lastEventsData = [currentEventToAdd, ...lastEventsData.slice(0, -1)];
+        const lastEventSnapshot = await getDocs(lastEventQuery);
+        
+        if (!lastEventSnapshot.empty) {
+          // Find the first event that has truly ended (considering duration)
+          for (const doc of lastEventSnapshot.docs) {
+            const eventData = doc.data();
+            const startDate = new Date(eventData.date.seconds * 1000);
+            const endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + eventData.duration);
+            
+            if (endDate < new Date()) {
+              const lastEventData = {
+                id: doc.id,
+                ...eventData,
+                date: startDate.toLocaleDateString('fr-FR'),
+              };
+              setLastEvent(lastEventData);
+              break;
+            }
+          }
         }
-
-        setLastEvents(lastEventsData);
 
         // Fetch next event (events with start date after now)
         const nextEventQuery = query(
@@ -104,6 +112,18 @@ export default function Home() {
           };
           setNextEvent(nextEventData);
         }
+
+        // Fetch statistics
+        const membersSnapshot = await getDocs(collection(db, "members"));
+        const eventsSnapshot = await getDocs(eventsRef);
+        const registrationsSnapshot = await getDocs(collection(db, "registrations"));
+
+        setStats({
+          totalMembers: membersSnapshot.size,
+          totalEvents: eventsSnapshot.size,
+          totalSubscribed: registrationsSnapshot.size
+        });
+
       } catch (error) {
         console.error("Error fetching events:", error);
       } finally {
@@ -117,14 +137,6 @@ export default function Home() {
     const interval = setInterval(fetchEvents, 60000);
     return () => clearInterval(interval);
   }, []);
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev === lastEvents.length - 1 ? 0 : prev + 1));
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev === 0 ? lastEvents.length - 1 : prev - 1));
-  };
 
   if (loading) {
     return (
@@ -149,6 +161,25 @@ export default function Home() {
           <h3 className="text-center text-white sm:text-5xl md:text-6xl font-semibold text-lg lg:text-6xl">
             A journey of a thousand miles begins with a single step
           </h3>
+        </div>
+      </div>
+
+      <div className="bg-gray-50 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-green-bk mb-2">{stats.totalMembers}</div>
+              <div className="text-gray-600">Active Members</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-green-bk mb-2">{stats.totalEvents}</div>
+              <div className="text-gray-600">Total Events</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-green-bk mb-2">{stats.totalSubscribed}</div>
+              <div className="text-gray-600">Event Registrations</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -187,90 +218,65 @@ export default function Home() {
         </div>
       )}
 
-      {nextEvent && (
-        <div className="px-4 sm:mx-12 md:mx-24 my-10 md:my-24 lg:my-32">
-          <h1 className="text-3xl lg:text-4xl mb-6 text-center font-medium lg:font-semibold">
-            Next Event
-          </h1>
-          <div className="flex flex-col md:flex-row gap-4 lg:gap-20 justify-evenly items-center">
-            <div className="relative w-48 sm:w-72 md:w-96 lg:w-[34rem] mt-5 sm:mt-2">
-              <div className="absolute w-full h-full rounded-tl-lg rounded-br-lg border border-1 border-dark-one7 left-4 top-4 z-0"></div>
-              <img
-                src={nextEvent.image}
-                className="w-full h-auto object-cover rounded-tl-lg rounded-br-lg z-10 relative"
-                alt={nextEvent.title}
-              />
-            </div>
-            <div className="text-center mt-5 md:mt-0 md:w-1/2 md:text-start">
-              <h1 className="text-lg sm:text-3xl text-green-bk lg:text-5xl pb-5">
-                {nextEvent.title}
-              </h1>
-              <h4 className="text-md sm:text-xl tlg:text-3xl pb-5 text-gray-400">
-                {nextEvent.date}
-              </h4>
-              <p className="text-gray-600 text-sm sm:text-base mb-6">
-                {nextEvent.description}
-              </p>
+      <div className="px-4 sm:mx-12 md:mx-24 my-10 md:my-24 lg:my-32">
+        <h1 className="text-3xl lg:text-4xl mb-6 text-center font-medium lg:font-semibold">
+          Next Event
+        </h1>
+        <div className="flex flex-col md:flex-row gap-4 lg:gap-20 justify-evenly items-center">
+          <div className="relative w-48 sm:w-72 md:w-96 lg:w-[34rem] mt-5 sm:mt-2">
+            <div className="absolute w-full h-full rounded-tl-lg rounded-br-lg border border-1 border-dark-one7 left-4 top-4 z-0"></div>
+            <img
+              src={nextEvent ? nextEvent.image : "https://placehold.co/600x400/1B9C85/FFFFFF/png?text=Coming+Soon"}
+              className="w-full h-auto object-cover rounded-tl-lg rounded-br-lg z-10 relative"
+              alt={nextEvent ? nextEvent.title : "Coming Soon"}
+            />
+          </div>
+          <div className="text-center mt-5 md:mt-0 md:w-1/2 md:text-start">
+            <h1 className="text-lg sm:text-3xl text-green-bk lg:text-5xl pb-5">
+              {nextEvent ? nextEvent.title : "Coming Soon"}
+            </h1>
+            <h4 className="text-md sm:text-xl tlg:text-3xl pb-5 text-gray-400">
+              {nextEvent?.date}
+            </h4>
+            <p className="text-gray-600 text-sm sm:text-base mb-6">
+              {nextEvent ? nextEvent.description : "Stay tuned for our next exciting event!"}
+            </p>
+            {nextEvent && (
               <Link
                 to={`/inscription/${nextEvent.id}`}
                 className="bg-green-bk text-white font-semibold px-6 py-3 rounded-lg hover:bg-[#148563] transition"
               >
                 Pre-Register Now
               </Link>
-            </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
 
-      {lastEvents.length > 0 && (
+      {lastEvent && (
         <div className="px-4 sm:mx-12 md:mx-24 my-10 md:my-24">
           <h1 className="text-3xl lg:text-4xl mb-6 text-center font-medium lg:font-semibold">
-            Our Last Events
+            Our Last Event
           </h1>
-          <div className="relative">
-            <div className="overflow-hidden">
-              <div
-                className="flex transition-transform duration-500 ease-in-out"
-                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-              >
-                {lastEvents.map((event, index) => (
-                  <div key={event.id} className="w-full flex-shrink-0">
-                    <div className="bg-white rounded-xl overflow-hidden shadow-lg mx-auto max-w-xl ">
-                      <img
-                        src={event.image}
-                        alt={event.title}
-                        className="w-full h-auto object-cover"
-                      />
-                      <div className="p-6">
-                        <h3 className="text-xl font-semibold mb-2">
-                          {event.title}
-                        </h3>
-                        <p className="text-gray-600 mb-4">{event.date}</p>
-                        <p className="text-gray-700">{event.description}</p>
-                        <div className="mt-4">
-                          <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                            {event.category.charAt(0).toUpperCase() +
-                              event.category.slice(1)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+          <div className="bg-white rounded-xl overflow-hidden shadow-lg mx-auto max-w-xl">
+            <img
+              src={lastEvent.image}
+              alt={lastEvent.title}
+              className="w-full h-auto object-cover"
+            />
+            <div className="p-6">
+              <h3 className="text-xl font-semibold mb-2">
+                {lastEvent.title}
+              </h3>
+              <p className="text-gray-600 mb-4">{lastEvent.date}</p>
+              <p className="text-gray-700">{lastEvent.description}</p>
+              <div className="mt-4">
+                <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                  {lastEvent.category.charAt(0).toUpperCase() +
+                    lastEvent.category.slice(1)}
+                </span>
               </div>
             </div>
-            <button
-              onClick={prevSlide}
-              className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-md hover:bg-white transition-colors"
-            >
-              <IoChevronBackOutline className="w-6 h-6 text-green-bk" />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-md hover:bg-white transition-colors"
-            >
-              <IoChevronForwardOutline className="w-6 h-6 text-green-bk" />
-            </button>
           </div>
         </div>
       )}

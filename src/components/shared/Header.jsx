@@ -90,6 +90,15 @@ export default function Header() {
           >
             Our Team
           </Link>
+          <Link
+            to="/history"
+            className={`block mt-4 lg:inline-block lg:mt-0 text-white font-semibold py-2 px-4 rounded-md ${
+              activeLink === "history" ? "bg-gray-one7" : "hover:bg-gray-one7"
+            }`}
+            onClick={() => handleClick("history")}
+          >
+            Our History
+          </Link>
         </div>
       </div>
     </nav>

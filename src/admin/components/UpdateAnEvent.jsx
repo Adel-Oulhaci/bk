@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { collection, addDoc, Timestamp } from "firebase/firestore";
+import { useState, useEffect } from "react";
+import { collection, query, getDocs, doc, updateDoc, Timestamp } from "firebase/firestore";
 import { db, convertImageToBase64 } from "../../firebase";
 import { Calendar } from "lucide-react";
 
@@ -11,72 +11,94 @@ const categories = [
   "hiking",
   "games",
 ];
-export default function AddAnEvent() {
-  const [newEvent, setNewEvent] = useState({
+
+export default function UpdateAnEvent() {
+  const [events, setEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState("");
+  const [updatedEvent, setUpdatedEvent] = useState({
     title: "",
     date: "",
     category: "",
     description: "",
-    duration: "", 
+    duration: "",
   });
-  const [image, setImage] = useState(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [image, setImage] = useState(null);
   const [error, setError] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
-    if (!image) {
-      setError("Please select an image");
-      return;
+  const fetchEvents = async () => {
+    try {
+      const eventsRef = collection(db, "events");
+      const q = query(eventsRef);
+      const querySnapshot = await getDocs(q);
+      
+      const eventsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        date: new Date(doc.data().date.seconds * 1000).toISOString().split('T')[0],
+        duration: doc.data().duration || 1
+      }));
+      
+      setEvents(eventsData);
+    } catch (error) {
+      console.error("Error fetching events:", error);
     }
+  };
+
+  const handleEventSelect = (event) => {
+    setSelectedEvent(event.id);
+    setUpdatedEvent({
+      title: event.title,
+      date: event.date,
+      category: event.category,
+      description: event.description,
+      duration: event.duration,
+    });
+    setImage(event.image); // Assuming event.image is the URL or base64 string of the image
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setIsUpdating(true);
 
     try {
-      setIsUploading(true);
+      const base64Image = image ? await convertImageToBase64(image) : updatedEvent.image;
 
-      const base64Image = await convertImageToBase64(image);
+      const startDate = new Date(updatedEvent.date);
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + (parseInt(updatedEvent.duration) - 1));
 
-      const eventData = {
-        title: newEvent.title,
-        date: Timestamp.fromDate(new Date(newEvent.date)),
-        category: newEvent.category,
+      const eventRef = doc(db, "events", selectedEvent);
+      await updateDoc(eventRef, {
+        ...updatedEvent,
+        date: Timestamp.fromDate(startDate),
+        endDate: Timestamp.fromDate(endDate),
+        duration: parseInt(updatedEvent.duration),
         image: base64Image,
-        description: newEvent.description,
-        duration: newEvent.duration, // Added duration to eventData
-        createdAt: Timestamp.now(),
-      };
-
-      await addDoc(collection(db, "events"), eventData);
+        updatedAt: Timestamp.now(),
+      });
 
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-
-      setNewEvent({
-        title: "",
-        date: "",
-        category: "",
-        description: "",
-        duration: "", // Reset duration field
-      });
-      setImage(null);
-
-      const fileInput = document.querySelector('input[type="file"]');
-      if (fileInput) {
-        fileInput.value = "";
-      }
+      fetchEvents(); // Refresh the events list
     } catch (error) {
-      console.error("Error adding event:", error);
-      setError(error.message || "Failed to add event. Please try again.");
+      console.error("Error updating event:", error);
+      setError(error.message || "Failed to update event. Please try again.");
     } finally {
+      setIsUpdating(false);
       setIsUploading(false);
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setNewEvent((prev) => ({
+    setUpdatedEvent((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -108,7 +130,7 @@ export default function AddAnEvent() {
         <div className="dark:bg-gray-700 shadow-lg border  border-emerald-100 dark:border-gray-600 dark:shadow-none shadow-emerald-300 rounded-lg p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold dark:text-green-bk text-gray-900">
-              Add New Event
+              Update Event
             </h2>
             <Calendar className="h-6 w-6 text-green-bk" />
           </div>
@@ -119,7 +141,26 @@ export default function AddAnEvent() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleUpdate} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
+                Select Event
+              </label>
+              <select
+                value={selectedEvent}
+                onChange={(e) => handleEventSelect(events.find(event => event.id === e.target.value))}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
+                required
+              >
+                <option value="">Select an event</option>
+                {events.map((event) => (
+                  <option key={event.id} value={event.id}>
+                    {event.title} - {event.date}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
                 Event Title
@@ -127,7 +168,7 @@ export default function AddAnEvent() {
               <input
                 type="text"
                 name="title"
-                value={newEvent.title}
+                value={updatedEvent.title}
                 onChange={handleChange}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
                 required
@@ -141,7 +182,7 @@ export default function AddAnEvent() {
               <input
                 type="date"
                 name="date"
-                value={newEvent.date}
+                value={updatedEvent.date}
                 onChange={handleChange}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
                 required
@@ -154,7 +195,7 @@ export default function AddAnEvent() {
               </label>
               <select
                 name="category"
-                value={newEvent.category}
+                value={updatedEvent.category}
                 onChange={handleChange}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
                 required
@@ -175,7 +216,7 @@ export default function AddAnEvent() {
               <input
                 type="text"
                 name="duration"
-                value={newEvent.duration}
+                value={updatedEvent.duration}
                 onChange={handleChange}
                 placeholder=""
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
@@ -203,7 +244,7 @@ export default function AddAnEvent() {
               </label>
               <textarea
                 name="description"
-                value={newEvent.description}
+                value={updatedEvent.description}
                 onChange={handleChange}
                 rows={4}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
@@ -217,14 +258,14 @@ export default function AddAnEvent() {
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-bk hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-bk disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isUploading}
               >
-                {isUploading ? "Uploading..." : "Add Event"}
+                {isUploading ? "Uploading..." : "Update Event"}
               </button>
             </div>
           </form>
 
           {showSuccess && (
             <div className="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-              Event added successfully!
+              Event updated successfully!
             </div>
           )}
         </div>

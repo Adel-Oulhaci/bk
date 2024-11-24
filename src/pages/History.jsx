@@ -44,7 +44,7 @@ export default function History() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h2 className="text-3xl font-bold text-center mb-8">Event Timeline</h2>
+      <h2 className="text-3xl font-bold text-center mb-8">Event's Timeline</h2>
       <ol className="ml-7 border-l-2 border-green-bk">
         {events.map((event) => (
           <li key={event.id}>

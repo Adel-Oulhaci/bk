@@ -71,7 +71,7 @@ export default function Footer() {
           </div>
           <div className="flex items-center mx-auto sm:mx-0 border-b-2 lg:mt-0 mt-2 border-gray-one7 pb-2 space-x-2">
             <FaLocationDot className=" text-green-one7 text-lg" />
-            <span className="text-white">Sidi Bel Abbès, Algeria</span>
+            <a href="https://maps.app.goo.gl/JtMhxt6epG8FGCfY6" target="_blank" className="text-white">Sidi Bel Abbès, Algeria</a>
           </div>
         </div>
         <div className="mt-2  lg:mt-0 text-gray-300">

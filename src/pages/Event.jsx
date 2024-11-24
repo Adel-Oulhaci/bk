@@ -64,8 +64,9 @@ function Event() {
           };
         });
 
+        // Sort eventsData by date for all categories
         const sortedEvents = eventsData.sort((a, b) => {
-          return b.date.localeCompare(a.date);
+          return new Date(b.date) - new Date(a.date);
         });
 
         setEvents(sortedEvents);

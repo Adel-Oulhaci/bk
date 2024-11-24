@@ -29,7 +29,7 @@ export default function Home() {
         const eventsRef = collection(db, "events");
         const now = Timestamp.now();
 
-        // Calculate current event's end date (date + duration in days)
+        // Fetch current event
         const currentEventQuery = query(
           eventsRef,
           where("date", "<=", now),
@@ -38,63 +38,48 @@ export default function Home() {
         );
         const currentEventSnapshot = await getDocs(currentEventQuery);
         
-        let currentEventToAdd = null;
-
         if (!currentEventSnapshot.empty) {
           const eventData = currentEventSnapshot.docs[0].data();
           const startDate = new Date(eventData.date.seconds * 1000);
           const endDate = new Date(startDate);
-          endDate.setDate(startDate.getDate() + eventData.duration);
+          endDate.setDate(startDate.getDate() + parseInt(eventData.duration));
           
-          // Only set as current event if it hasn't ended yet
-          if (endDate > new Date()) {
+          // Set current event if today's date is within its duration
+          if (startDate <= new Date() && endDate >= new Date()) {
             const currentEventData = {
               id: currentEventSnapshot.docs[0].id,
               ...eventData,
               date: startDate.toLocaleDateString('fr-FR'),
-              endDate: endDate
             };
             setCurrentEvent(currentEventData);
-            currentEventToAdd = null; // Reset currentEventToAdd since it's a current event
           } else {
-            // If event has ended, prepare it to be added to lastEvents
-            currentEventToAdd = {
-              id: currentEventSnapshot.docs[0].id,
-              ...eventData,
-              date: startDate.toLocaleDateString('fr-FR')
-            };
+            setCurrentEvent(null); // Clear current event if not within duration
           }
+        } else {
+          setCurrentEvent(null); // Clear current event if no event found
         }
 
-        // Fetch last event that has ended (considering duration)
+        // Fetch last event that has ended
         const lastEventQuery = query(
           eventsRef,
           where("date", "<", now),
-          orderBy("date", "desc")
+          orderBy("date", "desc"),
+          limit(1)
         );
         const lastEventSnapshot = await getDocs(lastEventQuery);
         
         if (!lastEventSnapshot.empty) {
-          // Find the first event that has truly ended (considering duration)
-          for (const doc of lastEventSnapshot.docs) {
-            const eventData = doc.data();
-            const startDate = new Date(eventData.date.seconds * 1000);
-            const endDate = new Date(startDate);
-            endDate.setDate(startDate.getDate() + eventData.duration);
-            
-            if (endDate < new Date()) {
-              const lastEventData = {
-                id: doc.id,
-                ...eventData,
-                date: startDate.toLocaleDateString('fr-FR'),
-              };
-              setLastEvent(lastEventData);
-              break;
-            }
-          }
+          const lastEventData = lastEventSnapshot.docs[0].data();
+          const startDate = new Date(lastEventData.date.seconds * 1000);
+          const lastEventFormatted = {
+            id: lastEventSnapshot.docs[0].id,
+            ...lastEventData,
+            date: startDate.toLocaleDateString('fr-FR'),
+          };
+          setLastEvent(lastEventFormatted);
         }
 
-        // Fetch next event (events with start date after now)
+        // Fetch next event
         const nextEventQuery = query(
           eventsRef,
           where("date", ">", now),
@@ -114,14 +99,13 @@ export default function Home() {
         }
 
         // Fetch statistics
-        const membersSnapshot = await getDocs(collection(db, "members"));
         const eventsSnapshot = await getDocs(eventsRef);
         const registrationsSnapshot = await getDocs(collection(db, "registrations"));
 
         setStats({
-          totalMembers: membersSnapshot.size,
+          totalMembers: 40+"+",
           totalEvents: eventsSnapshot.size,
-          totalSubscribed: registrationsSnapshot.size
+          totalSubscribed: 10000+registrationsSnapshot.size+"+"
         });
 
       } catch (error) {
@@ -183,7 +167,7 @@ export default function Home() {
         </div>
       </div>
 
-      {currentEvent && (
+      {currentEvent ? (
         <div className="px-4 sm:mx-12 md:mx-24 my-10 md:my-24 lg:my-32">
           <h1 className="text-3xl lg:text-4xl mb-6 text-center font-medium lg:font-semibold">
             Current Event
@@ -216,7 +200,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      )}
+      ) : (null)}
 
       <div className="px-4 sm:mx-12 md:mx-24 my-10 md:my-24 lg:my-32">
         <h1 className="text-3xl lg:text-4xl mb-6 text-center font-medium lg:font-semibold">

@@ -1,43 +1,26 @@
-import { Calendar } from "lucide-react";
-
 export default function EventCard({ event, onLearnMore }) {
   return (
     <div
-      className={`bg-white rounded-xl h-min shadow-md overflow-hidden transition-transform hover:scale-105 ${
-        event.isPast ? "opacity-75" : ""
-      }`}
+      key={event.id}
+      className="relative group w-fit place-items-center overflow-hidden  rounded-lg shadow-lg"
     >
-      <div className="relative h-48">
-        <img
-          src={event.image}
-          alt={event.title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute top-4 left-4 bg-white px-3 py-1 rounded-full shadow-md">
-          <div className="flex items-center space-x-1">
-            <Calendar className="w-4 h-4 text-green-bk" />
-            <span className="text-sm font-medium text-gray-700">
-              {event.date}
-            </span>
-          </div>
-        </div>
-        {event.isPast && (
-          <div className="absolute top-4 right-4 bg-gray-800 text-white px-3 py-1 rounded-full text-sm">
-            Past Event
-          </div>
-        )}
-      </div>
-      <div className="p-6">
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">
+      <img
+        src={event.image}
+        alt={event.title}
+        className=" h-[295px]  transition-transform duration-300 group-hover:scale-110"
+      />
+      <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-white p-4">
+        <h3 className="text-xl flex-1 flex justify-center items-center font-bold mb-2">
           {event.title}
         </h3>
-        <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
-
-        <div className="flex items-center justify-between">
-          <span className="inline-block bg-green-100 text-green-bk px-3 py-1 rounded-full text-sm font-medium">
+        <div className="w-full  flex justify-between items-center">
+          <span className="px-3 py-1 bg-green-bk rounded-full text-sm">
             {event.category.charAt(0).toUpperCase() + event.category.slice(1)}
           </span>
-          <button onClick={onLearnMore} className="text-green-bk font-medium">
+          <button
+            onClick={onLearnMore}
+            className="bg-white text-green-bk px-4 py-2 rounded-lg hover:bg-green-bk hover:text-white transition-colors duration-300"
+          >
             Learn More →
           </button>
         </div>

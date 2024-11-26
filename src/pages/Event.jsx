@@ -64,7 +64,6 @@ function Event() {
           };
         });
 
-        // Sort eventsData by date for all categories
         const sortedEvents = eventsData.sort((a, b) => {
           return new Date(b.date) - new Date(a.date);
         });
@@ -151,7 +150,7 @@ function Event() {
               No events found for this category.
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 place-items-center gap-6">
               {filteredEvents.map((event) => (
                 <EventCard
                   key={event.id}
@@ -169,11 +168,6 @@ function Event() {
               <h3 className="text-2xl font-semibold text-gray-800 mb-4">
                 {selectedEvent.title}
               </h3>
-              <img
-                src={selectedEvent.image}
-                alt={selectedEvent.title}
-                className="w-full h-48 object-cover rounded mb-4"
-              />
               <p className="text-gray-700 mb-4">
                 <strong>Date:</strong> {selectedEvent.date}
               </p>

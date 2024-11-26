@@ -1,16 +1,22 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { doc, getDoc, updateDoc, collection, getDocs } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  getDocs,
+} from "firebase/firestore";
 import { db, convertImageToBase64 } from "../../firebase";
 
 const UpdateMember = () => {
-  const { id } = useParams(); // Get the member ID from the URL
+  const { id } = useParams();
   const [members, setMembers] = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState(id);
   const [formData, setFormData] = useState({
     name: "",
     role: "",
-    image: "", // Initialize image as an empty string
+    image: "",
     date: "",
   });
   const [error, setError] = useState("");
@@ -21,7 +27,10 @@ const UpdateMember = () => {
     const fetchMembers = async () => {
       const membersCollection = collection(db, "members");
       const membersSnapshot = await getDocs(membersCollection);
-      const membersList = membersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const membersList = membersSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
       setMembers(membersList);
     };
 

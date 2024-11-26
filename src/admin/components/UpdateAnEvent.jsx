@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { collection, query, getDocs, doc, updateDoc, Timestamp } from "firebase/firestore";
+import {
+  collection,
+  query,
+  getDocs,
+  doc,
+  updateDoc,
+  Timestamp,
+} from "firebase/firestore";
 import { db, convertImageToBase64 } from "../../firebase";
 import { Calendar } from "lucide-react";
 
@@ -37,14 +44,19 @@ export default function UpdateAnEvent() {
       const eventsRef = collection(db, "events");
       const q = query(eventsRef);
       const querySnapshot = await getDocs(q);
-      
-      const eventsData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: new Date(doc.data().date.seconds * 1000).toISOString().split('T')[0],
-        duration: doc.data().duration || 1
-      }));
-      
+
+      const eventsData = querySnapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          date: new Date(doc.data().date.seconds * 1000),
+          formattedDate: new Date(doc.data().date.seconds * 1000)
+            .toISOString()
+            .split("T")[0],
+          duration: doc.data().duration || 1,
+        }))
+        .sort((a, b) => b.date - a.date);
+
       setEvents(eventsData);
     } catch (error) {
       console.error("Error fetching events:", error);
@@ -60,7 +72,7 @@ export default function UpdateAnEvent() {
       description: event.description,
       duration: event.duration,
     });
-    setImage(event.image); // Assuming event.image is the URL or base64 string of the image
+    setImage(event.image);
   };
 
   const handleUpdate = async (e) => {
@@ -68,11 +80,15 @@ export default function UpdateAnEvent() {
     setIsUpdating(true);
 
     try {
-      const base64Image = image ? await convertImageToBase64(image) : updatedEvent.image;
+      const base64Image = image
+        ? await convertImageToBase64(image)
+        : updatedEvent.image;
 
       const startDate = new Date(updatedEvent.date);
       const endDate = new Date(startDate);
-      endDate.setDate(startDate.getDate() + (parseInt(updatedEvent.duration) - 1));
+      endDate.setDate(
+        startDate.getDate() + (parseInt(updatedEvent.duration) - 1)
+      );
 
       const eventRef = doc(db, "events", selectedEvent);
       await updateDoc(eventRef, {
@@ -86,7 +102,7 @@ export default function UpdateAnEvent() {
 
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-      fetchEvents(); // Refresh the events list
+      fetchEvents();
     } catch (error) {
       console.error("Error updating event:", error);
       setError(error.message || "Failed to update event. Please try again.");
@@ -148,14 +164,18 @@ export default function UpdateAnEvent() {
               </label>
               <select
                 value={selectedEvent}
-                onChange={(e) => handleEventSelect(events.find(event => event.id === e.target.value))}
+                onChange={(e) =>
+                  handleEventSelect(
+                    events.find((event) => event.id === e.target.value)
+                  )
+                }
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
                 required
               >
                 <option value="">Select an event</option>
                 {events.map((event) => (
                   <option key={event.id} value={event.id}>
-                    {event.title} - {event.date}
+                    {event.title} - {event.formattedDate}
                   </option>
                 ))}
               </select>

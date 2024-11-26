@@ -92,6 +92,30 @@ export default function SideBar({ isSideBarOpen, setIsSideBarOpen }) {
               </span>
             </Link>
           </li>
+          <li>
+            <Link
+              to="./addmember"
+              onClick={handleLinkClick}
+              className="flex items-center p-2 text-gray-900 rounded-lg dark:text-green-bk hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <FaUserAlt className="mr-2" />
+              <span className="inline-flex items-center justify-center px-2 ms-3 text-sm font-medium rounded-full">
+                Add a Member
+              </span>
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="./updatemember"
+              onClick={handleLinkClick}
+              className="flex items-center p-2 text-gray-900 rounded-lg dark:text-green-bk hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <FaUserAlt className="mr-2" />
+              <span className="inline-flex items-center justify-center px-2 ms-3 text-sm font-medium rounded-full">
+                Update a Member
+              </span>
+            </Link>
+          </li>
         </ul>
 
         <div className="mt-auto pl-4">

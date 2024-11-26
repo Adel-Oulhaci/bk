@@ -153,15 +153,15 @@ export default function Home() {
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
             <div className="text-center">
               <div className="text-4xl font-bold text-green-bk mb-2">{stats.totalMembers}</div>
-              <div className="text-gray-600">Active Members</div>
+              <div className="text-gray-600">Members</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-green-bk mb-2">{stats.totalEvents}</div>
-              <div className="text-gray-600">Total Events</div>
+              <div className="text-gray-600">Events</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-green-bk mb-2">{stats.totalSubscribed}</div>
-              <div className="text-gray-600">Event Registrations</div>
+              <div className="text-gray-600">Event's Registrations</div>
             </div>
           </div>
         </div>

@@ -20,6 +20,8 @@ import AdminPage from "./admin/AdminPage";
 import AddAnEvent from "./admin/components/AddAnEvent";
 import Login from "./pages/Login";
 import UpdateAnEvent from "./admin/components/UpdateAnEvent";
+import AddMember from "./admin/components/AddMember";
+import UpdateMember from "./admin/components/UpdateMember";
 
 const ProtectedRoute = ({ children }) => {
   const [user, loading] = useAuthState(auth);
@@ -65,6 +67,8 @@ function App() {
           <Route path="addaninscription" element={<AddAnInscription />} />
           <Route path="addanevent" element={<AddAnEvent />} />
           <Route path="updateanevent" element={<UpdateAnEvent />} />
+          <Route path="addmember" element={<AddMember/>} />
+          <Route path="updatemember" element={<UpdateMember/>} />
         </Route>
       </Routes>
     </Router>

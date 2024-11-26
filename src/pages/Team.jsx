@@ -1,10 +1,34 @@
+import { useEffect, useState } from "react";
 import { Users } from "lucide-react";
 import { MemberCard } from "../components/team/MemberCard";
 import { AutoCarousel } from "../components/team/AutoCarousel";
 import reg from "../assets/Cvrt1.png";
-import { responsables, members } from "../services/Details";
+import { db } from "../firebase";
+import { collection, getDocs } from "firebase/firestore";
 
 function Team() {
+  const [members, setMembers] = useState([]);
+  const [responsables, setResponsables] = useState([]);
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      const membersCollection = collection(db, "members");
+      const membersSnapshot = await getDocs(membersCollection);
+      const membersList = membersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setMembers(membersList);
+    };
+
+    const fetchResponsables = async () => {
+      const responsablesCollection = collection(db, "responsables");
+      const responsablesSnapshot = await getDocs(responsablesCollection);
+      const responsablesList = responsablesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setResponsables(responsablesList);
+    };
+
+    fetchMembers();
+    fetchResponsables();
+  }, []);
+
   return (
     <>
       <div className="relative">
@@ -29,7 +53,7 @@ function Team() {
               slideSpan="w-[calc(100%+9.8rem)]"
               variant="responsable"
             >
-              {[...responsables, ...responsables].map((person, index) => (
+              {responsables.map((person, index) => (
                 <div
                   key={index}
                   className="flex-[0_0_74%] sm:flex-[0_0_27%] md:flex-[0_0_21%] lg:flex-[0_0_18%] min-w-0"
@@ -46,7 +70,7 @@ function Team() {
               BK MEMBERS
             </h2>
             <AutoCarousel slideSpan="w-[calc(100%+1rem)]">
-              {[...members, ...members].map((person, index) => (
+              {members.map((person, index) => (
                 <div
                   key={index}
                   className="flex-[0_0_25%] sm:flex-[0_0_20%] md:flex-[0_0_16.666%] lg:flex-[0_0_14.285%] min-w-0"

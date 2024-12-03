@@ -12,7 +12,10 @@ import { db, convertImageToBase64 } from "../../firebase";
 const UpdateMember = () => {
   const { id } = useParams();
   const [members, setMembers] = useState([]);
-  const [selectedMemberId, setSelectedMemberId] = useState(id);
+  const [responsables, setResponsables] = useState([]);
+  const [menuItems, setMenuItems] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("members");
+  const [selectedItemId, setSelectedItemId] = useState(id);
   const [formData, setFormData] = useState({
     name: "",
     role: "",
@@ -24,34 +27,45 @@ const UpdateMember = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    const fetchMembers = async () => {
-      const membersCollection = collection(db, "members");
-      const membersSnapshot = await getDocs(membersCollection);
-      const membersList = membersSnapshot.docs.map((doc) => ({
+    const fetchCollectionData = async (collectionName, setState) => {
+      const collectionRef = collection(db, collectionName);
+      const snapshot = await getDocs(collectionRef);
+      const itemsList = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-      setMembers(membersList);
+      setState(itemsList);
     };
 
-    fetchMembers();
+    fetchCollectionData("members", setMembers);
+    fetchCollectionData("responsables", setResponsables);
+    fetchCollectionData("menu", setMenuItems);
   }, []);
 
   useEffect(() => {
-    const fetchMemberData = async () => {
-      const memberDoc = doc(db, "members", selectedMemberId);
-      const memberSnapshot = await getDoc(memberDoc);
-      if (memberSnapshot.exists()) {
-        setFormData(memberSnapshot.data());
+    const fetchItemData = async () => {
+      const docRef = doc(db, selectedCategory, selectedItemId);
+      const docSnapshot = await getDoc(docRef);
+      if (docSnapshot.exists()) {
+        setFormData(docSnapshot.data());
       } else {
-        setError("Member not found");
+        setError("Item not found");
       }
     };
 
-    if (selectedMemberId) {
-      fetchMemberData();
+    if (selectedItemId) {
+      fetchItemData();
     }
-  }, [selectedMemberId]);
+  }, [selectedItemId, selectedCategory]);
+
+  const handleCategoryChange = (e) => {
+    setSelectedCategory(e.target.value);
+    setSelectedItemId(""); // Reset selected item when category changes
+  };
+
+  const handleItemChange = (e) => {
+    setSelectedItemId(e.target.value);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -98,15 +112,15 @@ const UpdateMember = () => {
       setIsUploading(true);
       const base64Image = await convertImageToBase64(formData.image);
 
-      const memberData = {
+      const updatedData = {
         name: formData.name,
         role: formData.role,
         image: base64Image,
         date: formData.date,
       };
 
-      const memberDoc = doc(db, "members", selectedMemberId);
-      await updateDoc(memberDoc, memberData);
+      const docRef = doc(db, selectedCategory, selectedItemId);
+      await updateDoc(docRef, updatedData);
       setSuccess(true);
       setFormData({ name: "", role: "", image: "", date: "" });
       const fileInput = document.querySelector('input[type="file"]');
@@ -114,7 +128,7 @@ const UpdateMember = () => {
         fileInput.value = "";
       }
     } catch (err) {
-      setError("Failed to update member. Please try again.");
+      setError("Failed to update item. Please try again.");
     } finally {
       setIsUploading(false);
     }
@@ -125,7 +139,7 @@ const UpdateMember = () => {
       <div className="max-w-3xl mx-auto">
         <div className="dark:bg-gray-700 shadow-lg border border-emerald-100 dark:border-gray-600 dark:shadow-none shadow-emerald-300 rounded-lg p-6">
           <h2 className="text-2xl font-bold dark:text-green-bk text-gray-900 mb-6">
-            Update Member
+            Update Item
           </h2>
 
           {error && (
@@ -136,94 +150,112 @@ const UpdateMember = () => {
 
           {success && (
             <div className="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-              Member updated successfully!
+              Item updated successfully!
             </div>
           )}
 
           <div className="mb-4">
             <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
-              Select Member
+              Select Category
             </label>
             <select
-              value={selectedMemberId}
-              onChange={(e) => setSelectedMemberId(e.target.value)}
+              value={selectedCategory}
+              onChange={handleCategoryChange}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
             >
-              {members.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.name}
+              <option value="members">Members</option>
+              <option value="responsables">Responsables</option>
+              <option value="menu">Menu</option>
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
+              Select Item
+            </label>
+            <select
+              value={selectedItemId}
+              onChange={handleItemChange}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
+            >
+              {(selectedCategory === "members" ? members : selectedCategory === "responsables" ? responsables : menuItems).map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name || item.title}
                 </option>
               ))}
             </select>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
-                Name
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
-                required
-              />
-            </div>
+  <div>
+    <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
+      Name
+    </label>
+    <input
+      type="text"
+      name="name"
+      value={formData.name}
+      onChange={handleChange}
+      placeholder="Enter name"
+      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
+      required
+    />
+  </div>
 
-            <div>
-              <label className="block text-sm dark:text-green-bk font-medium text-gray-700">
-                Role
-              </label>
-              <input
-                type="text"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
-                required
-              />
-            </div>
+  <div>
+    <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
+      Role
+    </label>
+    <input
+      type="text"
+      name="role"
+      value={formData.role}
+      onChange={handleChange}
+      placeholder="Enter role"
+      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
+    />
+  </div>
 
-            <div>
-              <label className="block text-sm dark:text-green-bk font-medium text-gray-700">
-                Image Upload
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
-                required
-              />
-              <p className="mt-1 text-sm text-gray-500">Max file size: 5MB</p>
-            </div>
+  <div>
+    <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
+      Date
+    </label>
+    <input
+      type="date"
+      name="date"
+      value={formData.date}
+      onChange={handleChange}
+      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
+      required
+    />
+  </div>
 
-            <div>
-              <label className="block text-sm dark:text-green-bk font-medium text-gray-700">
-                Date
-              </label>
-              <input
-                type="text"
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
-                required
-              />
-            </div>
+  <div>
+    <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
+      Image
+    </label>
+    <input
+      type="file"
+      accept="image/*"
+      onChange={handleFileChange}
+      className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold dark:file:bg-gray-600 dark:file:text-green-bk file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300"
+      required
+    />
+  </div>
 
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-bk hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-bk disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={isUploading}
-              >
-                {isUploading ? "Updating..." : "Update Member"}
-              </button>
-            </div>
-          </form>
+  <div className="flex justify-end">
+    <button
+      type="submit"
+      className={`px-4 py-2 text-white font-semibold rounded-md ${
+        isUploading ? "bg-gray-500" : "bg-green-500 hover:bg-green-600"
+      }`}
+      disabled={isUploading}
+    >
+      {isUploading ? "Updating..." : "Update"}
+    </button>
+  </div>
+</form>
+
         </div>
       </div>
     </div>

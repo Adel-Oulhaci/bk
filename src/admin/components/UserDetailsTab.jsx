@@ -61,41 +61,52 @@ const UserDetailsTab = () => {
       const eventsRef = collection(db, "events");
       const q = query(eventsRef, orderBy("date", "desc"));
       const querySnapshot = await getDocs(q);
-      const now = Timestamp.now();
+      const now = new Date().toISOString().slice(0, 10);
 
       const eventsData = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-        date: new Date(doc.data().date.seconds * 1000),
-        isPast: doc.data().date.seconds < now.seconds,
+        date: doc.data().date,
+        isPast: doc.data().date < now
       }));
 
       setEvents(eventsData);
-      // Set the first upcoming event as default
       const upcomingEvent = eventsData.find((event) => !event.isPast);
       if (upcomingEvent) {
         setSelectedEvent(upcomingEvent);
+      } else if (eventsData.length > 0) {
+        setSelectedEvent(eventsData[0]);
       }
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching events:", error);
+      setLoading(false);
     }
   };
 
   const fetchRegistrations = async () => {
     try {
+      setLoading(true);
       const registrationsRef = collection(db, "registrations");
       const q = query(
         registrationsRef,
         where("eventId", "==", selectedEvent.id)
       );
       const querySnapshot = await getDocs(q);
-      const registrationsData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        timestamp: new Date(
-          doc.data().timestamp.seconds * 1000
-        ).toLocaleDateString(),
-      }));
+      const registrationsData = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          firstn: data.firstName || data.firstn || "",
+          lastn: data.lastName || data.lastn || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          academiclevel: data.academicLevel || data.academiclevel || "",
+          faculty: data.faculty || "",
+          timestamp: new Date(data.timestamp).toLocaleDateString(),
+          eventId: data.eventId,
+        };
+      });
       setUsers(registrationsData);
     } catch (error) {
       console.error("Error fetching registrations:", error);
@@ -205,7 +216,7 @@ const UserDetailsTab = () => {
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
 
-  if (loading) {
+  if (loading && !selectedEvent) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-bk"></div>

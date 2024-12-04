@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   collection,
   addDoc,
-  Timestamp,
   query,
   getDocs,
   orderBy,
@@ -36,19 +35,26 @@ export default function AddAnInscription() {
   const fetchEvents = async () => {
     try {
       const eventsRef = collection(db, "events");
-      const now = Timestamp.now();
-      const q = query(
-        eventsRef,
-        where("date", ">=", now),
-        orderBy("date", "asc")
-      );
+      const today = new Date().toISOString().slice(0, 10);
+      const q = query(eventsRef, orderBy("date", "desc")); 
       const querySnapshot = await getDocs(q);
+      
       const eventsData = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-        date: new Date(doc.data().date.seconds * 1000).toLocaleDateString(),
+        date: new Date(doc.data().date), // Store as Date object for proper sorting
       }));
-      setEvents(eventsData);
+
+      // Sort events by date in descending order
+      const sortedEvents = eventsData.sort((a, b) => b.date - a.date);
+
+      // Convert dates to locale string for display after sorting
+      const formattedEvents = sortedEvents.map(event => ({
+        ...event,
+        date: event.date.toLocaleDateString()
+      }));
+
+      setEvents(formattedEvents);
     } catch (error) {
       console.error("Error fetching events:", error);
       setError("Failed to load events");
@@ -109,7 +115,7 @@ export default function AddAnInscription() {
       const registrationData = {
         ...formData,
         eventId: selectedEvent,
-        timestamp: Timestamp.now(),
+        timestamp: new Date().toISOString().slice(0, 10),
         status: "pending",
       };
 
@@ -128,7 +134,7 @@ export default function AddAnInscription() {
       // Save QR code to subcollection
       await addDoc(collection(db, "registrations", docRef.id, "qrcodes"), {
         code: qrCodeImage,
-        createdAt: Timestamp.now(),
+        createdAt: new Date().toISOString().slice(0, 10),
       });
 
       setSuccess(true);

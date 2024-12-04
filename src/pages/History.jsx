@@ -16,14 +16,11 @@ export default function History() {
         const eventsData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-          date: new Date(doc.data().date.seconds * 1000).toLocaleDateString(
-            "fr-FR",
-            {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-            }
-          ),
+          date: new Date(doc.data().date).toLocaleDateString("fr-FR", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }),
         }));
 
         setEvents(eventsData);
@@ -67,7 +64,7 @@ export default function History() {
                     />
                   </svg>
                 </div>
-                <div className="mb-10 ml-6 block w-full bg-emerald-50  rounded-lg shadow-md p-6 transition-transform  hover:shadow-lg hover:cursor-pointer hover:shadow-green-bk">
+                <div className="mb-10 ml-6 block w-full bg-emerald-50 rounded-lg shadow-md p-6 transition-transform hover:shadow-lg hover:cursor-pointer hover:shadow-green-bk">
                   <div className="mb-4 flex justify-between">
                     <span className="text-sm font-medium text-green-bk">
                       {event.title}
@@ -96,7 +93,7 @@ export default function History() {
           {events.map((event, index) => (
             <div
               key={event.id}
-              className={`flex items-center  gap-8 ${
+              className={`flex items-center gap-8 ${
                 index % 2 === 0 ? "flex-row" : "flex-row-reverse"
               }`}
             >
@@ -105,7 +102,7 @@ export default function History() {
                   index % 2 === 0 ? "text-right" : "text-left"
                 }`}
               >
-                <div className="bg-emerald-50 z-50 rounded-lg shadow-md p-6 transition-transform  hover:shadow-lg hover:cursor-pointer hover:shadow-green-bk">
+                <div className="bg-emerald-50 z-50 rounded-lg shadow-md p-6 transition-transform hover:shadow-lg hover:cursor-pointer hover:shadow-green-bk">
                   <div
                     className={`flex justify-between items-start mb-4 ${
                       index % 2 === 0 ? "flex-row-reverse" : "flex-row"
@@ -150,7 +147,7 @@ export default function History() {
                 {index % 2 === 0 ? (
                   <div className="absolute top-1/2 w-[calc(2.3rem-5px)] h-[2px] bg-green-bk right-full transform -translate-y-1/2"></div>
                 ) : (
-                  <div className="absolute top-1/2 w-[calc(2.3rem-5px)] h-[2px] bg-green-bk left-full transform -translate-y-1/2 "></div>
+                  <div className="absolute top-1/2 w-[calc(2.3rem-5px)] h-[2px] bg-green-bk left-full transform -translate-y-1/2"></div>
                 )}
               </div>
 

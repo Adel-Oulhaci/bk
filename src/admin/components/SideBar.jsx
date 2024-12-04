@@ -57,7 +57,7 @@ export default function SideBar({ isSideBarOpen, setIsSideBarOpen }) {
               </span>
             </Link>
           </li>
-          {/* <li>
+          <li>
             <Link
               to="./listofevents"
               className="flex items-center p-2 text-gray-900 rounded-lg dark:text-green-bk hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -67,7 +67,7 @@ export default function SideBar({ isSideBarOpen, setIsSideBarOpen }) {
                 List of Events
               </span>
             </Link>
-          </li> */}
+          </li>
           <li>
             <Link
               to="./addanevent"

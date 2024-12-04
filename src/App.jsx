@@ -16,6 +16,7 @@ import History from "./pages/History";
 import Team from "./pages/Team";
 import AdminLayout from "./admin/components/AdminLayout";
 import AddAnInscription from "./admin/components/AddAnInscription";
+import ListOfEvents from "./admin/components/ListOfEvents";
 import AdminPage from "./admin/AdminPage";
 import AddAnEvent from "./admin/components/AddAnEvent";
 import Login from "./pages/Login";
@@ -65,10 +66,11 @@ function App() {
         >
           <Route index element={<AdminPage />} />
           <Route path="addaninscription" element={<AddAnInscription />} />
+          <Route path="listofevents" element={<ListOfEvents />} />
           <Route path="addanevent" element={<AddAnEvent />} />
           <Route path="updateanevent" element={<UpdateAnEvent />} />
-          <Route path="addmember" element={<AddMember/>} />
-          <Route path="updatemember" element={<UpdateMember/>} />
+          <Route path="addmember" element={<AddMember />} />
+          <Route path="updatemember" element={<UpdateMember />} />
         </Route>
       </Routes>
     </Router>

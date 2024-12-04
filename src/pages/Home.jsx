@@ -20,94 +20,68 @@ export default function Home() {
   const [stats, setStats] = useState({
     totalMembers: 0,
     totalEvents: 0,
-    totalSubscribed: 0
+    totalSubscribed: 0,
   });
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const eventsRef = collection(db, "events");
-        const now = Timestamp.now();
+        const now = new Date().toISOString().slice(0, 10);
 
-        // Fetch current event
-        const currentEventQuery = query(
-          eventsRef,
-          where("date", "<=", now),
-          orderBy("date", "desc"),
-          limit(1)
+        // Fetch all events once to reduce database calls
+        const eventsSnapshot = await getDocs(
+          query(eventsRef, orderBy("date", "asc"))
         );
-        const currentEventSnapshot = await getDocs(currentEventQuery);
-        
-        if (!currentEventSnapshot.empty) {
-          const eventData = currentEventSnapshot.docs[0].data();
-          const startDate = new Date(eventData.date.seconds * 1000);
-          const endDate = new Date(startDate);
-          endDate.setDate(startDate.getDate() + parseInt(eventData.duration));
-          
-          // Set current event if today's date is within its duration
-          if (startDate <= new Date() && endDate >= new Date()) {
-            const currentEventData = {
-              id: currentEventSnapshot.docs[0].id,
+
+        let current = null;
+        let last = null;
+        let next = null;
+
+        eventsSnapshot.forEach((doc) => {
+          const eventData = doc.data();
+          const eventDate = eventData.date;
+          const endDate = new Date(eventData.date);
+          endDate.setDate(
+            new Date(eventData.date).getDate() + parseInt(eventData.duration)
+          );
+          const endDateStr = endDate.toISOString().slice(0, 10);
+
+          // Only set current event if today's date falls within event duration
+          if (eventDate <= now && now <= endDateStr) {
+            current = {
+              id: doc.id,
               ...eventData,
-              date: startDate.toLocaleDateString('fr-FR'),
+              date: new Date(eventDate).toLocaleDateString("fr-FR"),
+              endDate: endDateStr
             };
-            setCurrentEvent(currentEventData);
-          } else {
-            setCurrentEvent(null); // Clear current event if not within duration
+          } else if (current && eventDate > current.endDate && !next) {
+            // Set next event as first event after current event's end date
+            next = {
+              id: doc.id,
+              ...eventData,
+              date: new Date(eventDate).toLocaleDateString("fr-FR"),
+            };
+          } else if (endDateStr < now) {
+            // Keep track of last completed event
+            last = {
+              id: doc.id,
+              ...eventData,
+              date: new Date(eventDate).toLocaleDateString("fr-FR"),
+            };
           }
-        } else {
-          setCurrentEvent(null); // Clear current event if no event found
-        }
-
-        // Fetch last event that has ended
-        const lastEventQuery = query(
-          eventsRef,
-          where("date", "<", now),
-          orderBy("date", "desc"),
-          limit(1)
-        );
-        const lastEventSnapshot = await getDocs(lastEventQuery);
-        
-        if (!lastEventSnapshot.empty) {
-          const lastEventData = lastEventSnapshot.docs[0].data();
-          const startDate = new Date(lastEventData.date.seconds * 1000);
-          const lastEventFormatted = {
-            id: lastEventSnapshot.docs[0].id,
-            ...lastEventData,
-            date: startDate.toLocaleDateString('fr-FR'),
-          };
-          setLastEvent(lastEventFormatted);
-        }
-
-        // Fetch next event
-        const nextEventQuery = query(
-          eventsRef,
-          where("date", ">", now),
-          orderBy("date", "asc"),
-          limit(1)
-        );
-        const nextEventSnapshot = await getDocs(nextEventQuery);
-        if (!nextEventSnapshot.empty) {
-          const nextEventData = {
-            id: nextEventSnapshot.docs[0].id,
-            ...nextEventSnapshot.docs[0].data(),
-            date: new Date(
-              nextEventSnapshot.docs[0].data().date.seconds * 1000
-            ).toLocaleDateString('fr-FR'),
-          };
-          setNextEvent(nextEventData);
-        }
-
-        // Fetch statistics
-        const eventsSnapshot = await getDocs(eventsRef);
-        const registrationsSnapshot = await getDocs(collection(db, "registrations"));
-
-        setStats({
-          totalMembers: 40+"+",
-          totalEvents: eventsSnapshot.size,
-          totalSubscribed: 10000+registrationsSnapshot.size+"+"
         });
 
+        setCurrentEvent(current);
+        setNextEvent(next);
+        setLastEvent(last);
+
+        // Update stats
+        setStats({
+          totalMembers: "40+",
+          totalEvents: eventsSnapshot.size,
+          totalSubscribed: "10000+",
+        });
       } catch (error) {
         console.error("Error fetching events:", error);
       } finally {
@@ -152,15 +126,21 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
             <div className="text-center">
-              <div className="text-4xl font-bold text-green-bk mb-2">{stats.totalMembers}</div>
+              <div className="text-4xl font-bold text-green-bk mb-2">
+                {stats.totalMembers}
+              </div>
               <div className="text-gray-600">Members</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-green-bk mb-2">{stats.totalEvents}</div>
+              <div className="text-4xl font-bold text-green-bk mb-2">
+                {stats.totalEvents}
+              </div>
               <div className="text-gray-600">Events</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-green-bk mb-2">{stats.totalSubscribed}</div>
+              <div className="text-4xl font-bold text-green-bk mb-2">
+                {stats.totalSubscribed}
+              </div>
               <div className="text-gray-600">Event's Registrations</div>
             </div>
           </div>
@@ -200,7 +180,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      ) : (null)}
+      ) : null}
 
       <div className="px-4 sm:mx-12 md:mx-24 my-10 md:my-24 lg:my-32">
         <h1 className="text-3xl lg:text-4xl mb-6 text-center font-medium lg:font-semibold">
@@ -210,7 +190,11 @@ export default function Home() {
           <div className="relative w-48 sm:w-72 md:w-96 lg:w-[34rem] mt-5 sm:mt-2">
             <div className="absolute w-full h-full rounded-tl-lg rounded-br-lg border border-1 border-dark-one7 left-4 top-4 z-0"></div>
             <img
-              src={nextEvent ? nextEvent.image : "https://placehold.co/600x400/1B9C85/FFFFFF/png?text=Coming+Soon"}
+              src={
+                nextEvent
+                  ? nextEvent.image
+                  : "https://placehold.co/600x400/1B9C85/FFFFFF/png?text=Coming+Soon"
+              }
               className="w-full h-auto object-cover rounded-tl-lg rounded-br-lg z-10 relative"
               alt={nextEvent ? nextEvent.title : "Coming Soon"}
             />
@@ -223,7 +207,9 @@ export default function Home() {
               {nextEvent?.date}
             </h4>
             <p className="text-gray-600 text-sm sm:text-base mb-6">
-              {nextEvent ? nextEvent.description : "Stay tuned for our next exciting event!"}
+              {nextEvent
+                ? nextEvent.description
+                : "Stay tuned for our next exciting event!"}
             </p>
             {nextEvent && (
               <Link
@@ -249,9 +235,7 @@ export default function Home() {
               className="w-full h-auto object-cover"
             />
             <div className="p-6">
-              <h3 className="text-xl font-semibold mb-2">
-                {lastEvent.title}
-              </h3>
+              <h3 className="text-xl font-semibold mb-2">{lastEvent.title}</h3>
               <p className="text-gray-600 mb-4">{lastEvent.date}</p>
               <p className="text-gray-700">{lastEvent.description}</p>
               <div className="mt-4">

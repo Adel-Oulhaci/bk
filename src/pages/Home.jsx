@@ -32,7 +32,7 @@ export default function Home() {
         // Fetch current event
         const currentEventQuery = query(
           eventsRef,
-          where("date", "<=", now),
+          where("date", "<=", new Date().toISOString().slice(0,10)),
           orderBy("date", "desc"),
           limit(1)
         );
@@ -62,7 +62,7 @@ export default function Home() {
         // Fetch last event that has ended
         const lastEventQuery = query(
           eventsRef,
-          where("date", "<", now),
+          where("date", "<=", new Date().toISOString().slice(0,10)),
           orderBy("date", "desc"),
           limit(1)
         );

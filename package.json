@@ -23,7 +23,8 @@
     "react-router-dom": "^6.27.0",
     "swiper": "^11.1.14",
     "tailwindcss": "^3.4.14",
-    "tw-elements-react": "^1.0.0-alpha-end"
+    "tw-elements-react": "^1.0.0-alpha-end",
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",

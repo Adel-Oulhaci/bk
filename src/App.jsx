@@ -23,6 +23,7 @@ import Login from "./pages/Login";
 import UpdateAnEvent from "./admin/components/UpdateAnEvent";
 import AddMember from "./admin/components/AddMember";
 import UpdateMember from "./admin/components/UpdateMember";
+import { EventsProvider } from "./context/EventsContext";
 
 const ProtectedRoute = ({ children }) => {
   const [user, loading] = useAuthState(auth);
@@ -45,35 +46,37 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="about" element={<About />} />
-          <Route path="event" element={<Event />} />
-          <Route path="history" element={<History />} />
-          <Route path="team" element={<Team />} />
-          <Route path="inscription/:eventId" element={<Inscription />} />
-        </Route>
-        <Route
-          path="/admin/*"
-          element={
-            <ProtectedRoute>
-              <AdminLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<AdminPage />} />
-          <Route path="addaninscription" element={<AddAnInscription />} />
-          <Route path="listofevents" element={<ListOfEvents />} />
-          <Route path="addanevent" element={<AddAnEvent />} />
-          <Route path="updateanevent" element={<UpdateAnEvent />} />
-          <Route path="addmember" element={<AddMember />} />
-          <Route path="updatemember" element={<UpdateMember />} />
-        </Route>
-      </Routes>
-    </Router>
+    <EventsProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="about" element={<About />} />
+            <Route path="event" element={<Event />} />
+            <Route path="history" element={<History />} />
+            <Route path="team" element={<Team />} />
+            <Route path="inscription/:eventId" element={<Inscription />} />
+          </Route>
+          <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<AdminPage />} />
+            <Route path="addaninscription" element={<AddAnInscription />} />
+            <Route path="listofevents" element={<ListOfEvents />} />
+            <Route path="addanevent" element={<AddAnEvent />} />
+            <Route path="updateanevent" element={<UpdateAnEvent />} />
+            <Route path="addmember" element={<AddMember />} />
+            <Route path="updatemember" element={<UpdateMember />} />
+          </Route>
+        </Routes>
+      </Router>
+    </EventsProvider>
   );
 }
 

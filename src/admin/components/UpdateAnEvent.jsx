@@ -10,6 +10,7 @@ import {
 } from "firebase/firestore";
 import { db, convertImageToBase64 } from "../../firebase";
 import { Calendar } from "lucide-react";
+import { useEvents } from "../../context/EventsContext";
 
 const categories = [
   "education",
@@ -21,6 +22,7 @@ const categories = [
 ];
 
 export default function UpdateAnEvent() {
+  const { events: contextEvents } = useEvents();
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState("");
   const [updatedEvent, setUpdatedEvent] = useState({
@@ -37,30 +39,16 @@ export default function UpdateAnEvent() {
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  const fetchEvents = async () => {
-    try {
-      const eventsRef = collection(db, "events");
-      const q = query(eventsRef, orderBy("date", "desc"));
-      const querySnapshot = await getDocs(q);
-
-      const eventsData = querySnapshot.docs
-        .map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          date: new Date(doc.data().date).toISOString().split("T")[0],
-          formattedDate: new Date(doc.data().date).toLocaleDateString(),
-          duration: doc.data().duration || 1,
-        }))
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      setEvents(eventsData);
-    } catch (error) {
-      console.error("Error fetching events:", error);
+    if (contextEvents.length) {
+      const formattedEvents = contextEvents.map(event => ({
+        ...event,
+        date: new Date(event.date).toISOString().split("T")[0],
+        formattedDate: new Date(event.date).toLocaleDateString(),
+        duration: event.duration || 1,
+      }));
+      setEvents(formattedEvents);
     }
-  };
+  }, [contextEvents]);
 
   const handleEventSelect = (event) => {
     setSelectedEvent(event.id);

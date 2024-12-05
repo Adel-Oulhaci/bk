@@ -15,8 +15,10 @@ import { BiSearch, BiTrash, BiEdit } from "react-icons/bi";
 import { IoMdArrowDropup, IoMdArrowDropdown } from "react-icons/io";
 import EditModal from "./EditModal";
 import DeleteModal from "./DeleteModal";
+import { useEvents } from "../../context/EventsContext";
 
 const UserDetailsTab = () => {
+  const { events: contextEvents, loading: eventsLoading } = useEvents();
   const [users, setUsers] = useState([]);
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -47,27 +49,11 @@ const UserDetailsTab = () => {
   ];
 
   useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  useEffect(() => {
-    if (selectedEvent) {
-      fetchRegistrations();
-    }
-  }, [selectedEvent]);
-
-  const fetchEvents = async () => {
-    try {
-      const eventsRef = collection(db, "events");
-      const q = query(eventsRef, orderBy("date", "desc"));
-      const querySnapshot = await getDocs(q);
+    if (contextEvents.length) {
       const now = new Date().toISOString().slice(0, 10);
-
-      const eventsData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().date,
-        isPast: doc.data().date < now
+      const eventsData = contextEvents.map(event => ({
+        ...event,
+        isPast: event.date < now
       }));
 
       setEvents(eventsData);
@@ -77,12 +63,14 @@ const UserDetailsTab = () => {
       } else if (eventsData.length > 0) {
         setSelectedEvent(eventsData[0]);
       }
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching events:", error);
-      setLoading(false);
     }
-  };
+  }, [contextEvents]);
+
+  useEffect(() => {
+    if (selectedEvent) {
+      fetchRegistrations();
+    }
+  }, [selectedEvent]);
 
   const fetchRegistrations = async () => {
     try {

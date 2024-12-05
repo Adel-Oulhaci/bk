@@ -6,18 +6,7 @@ import join from "../assets/join.png";
 import slogin from "../assets/slogin.png";
 import who from "../assets/who.png";
 import where from "../assets/where.png";
-import presedent from "../assets/members/presedent.png";
-import VP from "../assets/members/VP.png";
-import SG from "../assets/members/SG.png";
-import finance from "../assets/members/finance.png";
-import media from "../assets/members/media.png";
-import program from "../assets/members/program.png";
-import relation from "../assets/members/relation.png";
-import tools from "../assets/members/tools.png";
-import hadjer from "../assets/members/hadjer.jpg";
-import fatima_ben from "../assets/members/fatima_ben.jpg";
-import yasser from "../assets/members/yasser.jpg";
-import najwa from "../assets/members/najwa.jpg";
+
 
 
 
@@ -116,76 +105,5 @@ export const ABOUT = [
   img: join
 }
 ];
- export const responsables = [
-  {
-    name: "GHALEM Anes",
-    role: "Media Manager",
-    image:media,
-    date: "Depuis Nov 2023",
-  },
-  {
-    name: "FERKA ZAZOU Abdellatif",
-    role: "President",
-    image:presedent,
-    date: "Depuis Nov 2023",
-  },
-  {
-    name: "DERRAR Batoul",
-    role: "Relation",
-    image:relation,
-    date: "Depuis Nov 2023",
-  },
-  {
-    name: "TOU Achwak",
-    role: "Media Manager",
-    image:SG,
-    date: "Depuis Nov 2023",
-  },
-  {
-    name: "Achour aoul Fatima",
-    role: "Vice President",
-    image:VP,
-    date: "Depuis Nov 2023",
-  },
-  {
-    name: "OUAMARA Kawther",
-    role: "Program & Events",
-    image:program,
-    date: "Depuis Nov 2023",
-  },
-  {
-    name: "DJILLALI Saim",
-    role: "Tech & Development",
-    image:tools,
-    date: "Depuis Nov 2023",
-  },
-  {
-    name: "Youcefi Zuaouia",
-    role: "Finance",
-    image:finance,
-    date: "Depuis Nov 2023",
-  },
-];
 
-export const members = [
-  {
-    name: " Fatima",
-    role: "Finalizer",
-    image: fatima_ben,
-  },
-  {
-    name: "Derrar Yasser",
-    role: "Finalizer",
-    image: yasser,
-  },
-  {
-    name: "MAHIEDDINE Hadjer",
-    role: "Finalizer",
-    image: hadjer,
-  },
-  {
-    name: " Najwa",
-    role: "Finalizer",
-    image: najwa,
-  },
-];
+

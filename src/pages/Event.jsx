@@ -1,19 +1,6 @@
 import { useState, useEffect } from "react";
-import {
-  collection,
-  query,
-  getDocs,
-  orderBy,
-  where,
-} from "firebase/firestore";
-import { db } from "../firebase";
-import {
-  Calendar,
-  HeartHandshake,
-  Monitor,
-  BookOpen,
-  Mountain,
-} from "lucide-react";
+import { useEvents } from "../context/EventsContext";
+import { Calendar, HeartHandshake, Monitor, BookOpen, Mountain } from "lucide-react";
 import { GrWorkshop } from "react-icons/gr";
 import { IoGameControllerOutline, IoCloseSharp } from "react-icons/io5";
 import Navbar from "../components/event/Navbar";
@@ -31,59 +18,18 @@ const categories = [
 ];
 
 function Event() {
+  const { events, loading, error } = useEvents();
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const eventsRef = collection(db, "events");
-        const now = new Date().toISOString().slice(0, 10);
-        const q = query(
-          eventsRef,
-          where("date", "<=", now),
-          orderBy("date", "desc")
-        );
-        const querySnapshot = await getDocs(q);
-
-        const eventsData = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-            date: data.date,
-            isPast: false,
-          };
-        });
-
-        const sortedEvents = eventsData.sort((a, b) => {
-          return new Date(b.date) - new Date(a.date);
-        });
-
-        setEvents(sortedEvents);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching events:", err);
-        setError("Failed to load events. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEvents();
-  }, []);
-
-  useEffect(() => {
+    if (!events.length) return;
+    
     if (selectedCategory === "all") {
       setFilteredEvents(events);
     } else {
-      setFilteredEvents(
-        events.filter((event) => event.category === selectedCategory)
-      );
+      setFilteredEvents(events.filter((event) => event.category === selectedCategory));
     }
   }, [selectedCategory, events]);
 
@@ -165,7 +111,7 @@ function Event() {
                 {selectedEvent.title}
               </h3>
               <p className="text-gray-700 mb-4">
-                <strong>Date:</strong> {selectedEvent.date}
+                <strong>Date:</strong> {selectedEvent.date.split("T")[0]}
               </p>
               <p className="text-gray-700 mb-4">
                 <strong>Category:</strong>{" "}

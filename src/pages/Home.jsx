@@ -1,133 +1,46 @@
 import { useState, useEffect } from "react";
-import {
-  collection,
-  query,
-  orderBy,
-  getDocs,
-  limit,
-  where,
-  Timestamp,
-} from "firebase/firestore";
-import { db } from "../firebase";
+
 import { Link } from "react-router-dom";
 import home from "../assets/home.png";
 
+import { useEvents } from "../context/EventsContext";
+
 export default function Home() {
-  const [lastEvent, setLastEvent] = useState(null);
-  const [nextEvent, setNextEvent] = useState(null);
+  const { events, loading, stats } = useEvents();
   const [currentEvent, setCurrentEvent] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalMembers: 0,
-    totalEvents: 0,
-    totalSubscribed: 0,
-  });
+  const [nextEvent, setNextEvent] = useState(null);
+  const [lastEvent, setLastEvent] = useState(null);
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const eventsRef = collection(db, "events");
-        const membersRef = collection(db, "members");
-        const responsablesRef = collection(db, "responsables");
-        const registrationsRef = collection(db, "registrations");
-        const now = new Date();
-        const today = now.toISOString().slice(0, 10);
+    if (!events.length) return;
 
-        // Fetch all required data in parallel
-        const [eventsSnapshot, membersSnapshot, responsablesSnapshot, registrationsSnapshot] = await Promise.all([
-          getDocs(query(eventsRef, orderBy("date", "desc"))),
-          getDocs(membersRef),
-          getDocs(responsablesRef),
-          getDocs(registrationsRef)
-        ]);
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
 
-        let current = null;
-        let next = null;
-        let last = null;
+    let current = null;
+    let next = null;
+    let last = null;
 
-        eventsSnapshot.forEach((doc) => {
-          const eventData = doc.data();
-          const eventDate = new Date(eventData.date);
-          // Reset time to start of day
-          eventDate.setHours(0, 0, 0, 0);
-          const endDate = new Date(eventDate);
-          // If duration is 1, keep the same day. If 2, add one day, etc.
-          if (parseInt(eventData.duration) > 1) {
-            endDate.setDate(eventDate.getDate() + (parseInt(eventData.duration) - 1));
-          }
-          endDate.setHours(23, 59, 59, 999);
+    events.forEach((event) => {
+      const eventDate = new Date(event.date);
+      const endDate = new Date(eventDate);
+      endDate.setDate(eventDate.getDate() + (parseInt(event.duration) - 1));
 
-          // Reset current time to start of day for comparison
-          const nowDate = new Date(now);
-          nowDate.setHours(0, 0, 0, 0);
-
-          if (nowDate >= eventDate && nowDate <= endDate) {
-            current = {
-              id: doc.id,
-              ...eventData,
-              date: eventDate.toLocaleDateString("fr-FR"),
-              endDate: endDate.toISOString().slice(0, 10)
-            };
-          } else if (eventDate > nowDate && (!next || eventDate < new Date(next.date))) {
-            next = {
-              id: doc.id,
-              ...eventData,
-              date: eventDate.toLocaleDateString("fr-FR"),
-            };
-          } else if (endDate < nowDate) {
-            // Convert existing last event date for comparison
-            const lastEventDate = last ? new Date(last.date.split('/').reverse().join('-')) : null;
-            if (!last || eventDate > lastEventDate) {
-              last = {
-                id: doc.id,
-                ...eventData,
-                date: eventDate.toLocaleDateString("fr-FR"),
-                endDate: endDate.toISOString().slice(0, 10)
-              };
-            }
-          }
-        });
-
-        // If no current event is found, use next event as current and create placeholder
-        if (!current && !next) {
-          current = next;
-          next = {
-            id: 'placeholder',
-            title: 'Coming Soon',
-            description: 'Stay tuned for our next exciting event! We are preparing something special for you.',
-            date: 'To be announced',
-            location: 'To be determined',
-            image: home,
-            category: 'upcoming',
-            duration: '1'
-          };
-        } 
-
-        setCurrentEvent(current);
-        setNextEvent(next);
-        setLastEvent(last);
-
-        const totalMembers = membersSnapshot.size + responsablesSnapshot.size;
-        const totalEvents = eventsSnapshot.size;
-        const totalRegistrations = registrationsSnapshot.size;
-
-        setStats({
-          totalMembers: totalMembers,
-          totalEvents: totalEvents,
-          totalSubscribed: 10000+totalRegistrations,
-        });
-      } catch (error) {
-        console.error("Error fetching events:", error);
-      } finally {
-        setLoading(false);
+      if (today >= event.date && today <= endDate.toISOString().slice(0, 10)) {
+        current = event;
+      } else if (event.date > today && (!next || event.date < next.date)) {
+        next = event;
+      } else if (endDate.toISOString().slice(0, 10) < today) {
+        if (!last || new Date(event.date) > new Date(last.date)) {
+          last = event;
+        }
       }
-    };
+    });
 
-    fetchEvents();
-
-    const interval = setInterval(fetchEvents, 60000);
-    return () => clearInterval(interval);
-  }, []);
+    setCurrentEvent(current);
+    setNextEvent(next);
+    setLastEvent(last);
+  }, [events]);
 
   if (loading) {
     return (
@@ -180,7 +93,51 @@ export default function Home() {
         </div>
       </div>
 
-      {currentEvent && (
+      <div className="px-4 sm:mx-12 md:mx-24 my-10 md:my-24 lg:my-32">
+        <h1 className="text-3xl lg:text-4xl mb-6 text-center font-medium lg:font-semibold">
+          Next Event
+        </h1>
+        <div className="flex flex-col md:flex-row gap-4 lg:gap-20 justify-evenly items-center">
+          <div className="relative w-48 sm:w-72 md:w-96 lg:w-[34rem] mt-5 sm:mt-2">
+            <div className="absolute w-full h-full rounded-tl-lg rounded-br-lg border border-1 border-dark-one7 left-4 top-4 z-0"></div>
+            <img
+              src={nextEvent ? nextEvent.image : home}
+              className="w-full h-auto object-cover rounded-tl-lg rounded-br-lg z-10 relative"
+              alt={nextEvent ? nextEvent.title : "Coming Soon"}
+            />
+          </div>
+          <div className="text-center mt-5 md:mt-0 md:w-1/2 md:text-start">
+            <h1 className="text-lg sm:text-3xl text-green-bk lg:text-5xl pb-5">
+              {nextEvent ? nextEvent.title : "Coming Soon"}
+            </h1>
+            <h4 className="text-md sm:text-xl tlg:text-3xl pb-5 text-gray-400">
+              {nextEvent ? nextEvent.date.split("T")[0] : "To be announced"}
+            </h4>
+            <p className="text-gray-600 text-sm sm:text-base mb-6">
+              {nextEvent
+                ? nextEvent.description
+                : "Stay tuned for our next exciting event! We are preparing something special for you."}
+            </p>
+            {nextEvent ? (
+              <Link
+                to={`/inscription/${nextEvent.id}`}
+                className="bg-green-bk text-white font-semibold px-6 py-3 rounded-lg hover:bg-[#148563] transition"
+              >
+                Pre-Register Now
+              </Link>
+            ) : (
+              <button
+                disabled
+                className="bg-gray-400 text-white font-semibold px-6 py-3 rounded-lg cursor-not-allowed"
+              >
+                Pre-Register Now
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {currentEvent ? (
         <div className="px-4 sm:mx-12 md:mx-24 my-10 md:my-24 lg:my-32">
           <h1 className="text-3xl lg:text-4xl mb-6 text-center font-medium lg:font-semibold">
             Current Event
@@ -199,7 +156,7 @@ export default function Home() {
                 {currentEvent.title}
               </h1>
               <h4 className="text-md sm:text-xl tlg:text-3xl pb-5 text-gray-400">
-                {currentEvent.date}
+                {currentEvent.date.split("T")[0]}
               </h4>
               <p className="text-gray-600 text-sm sm:text-base mb-6">
                 {currentEvent.description}
@@ -213,47 +170,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      )}
-
-      {nextEvent && (
-        <div className="px-4 sm:mx-12 md:mx-24 my-10 md:my-24 lg:my-32">
-          <h1 className="text-3xl lg:text-4xl mb-6 text-center font-medium lg:font-semibold">
-            Next Event
-          </h1>
-          <div className="flex flex-col md:flex-row gap-4 lg:gap-20 justify-evenly items-center">
-            <div className="relative w-48 sm:w-72 md:w-96 lg:w-[34rem] mt-5 sm:mt-2">
-              <div className="absolute w-full h-full rounded-tl-lg rounded-br-lg border border-1 border-dark-one7 left-4 top-4 z-0"></div>
-              <img
-                src={nextEvent.image}
-                className="w-full h-auto object-cover rounded-tl-lg rounded-br-lg z-10 relative"
-                alt={nextEvent.title}
-              />
-            </div>
-            <div className="text-center mt-5 md:mt-0 md:w-1/2 md:text-start">
-              <h1 className="text-lg sm:text-3xl text-green-bk lg:text-5xl pb-5">
-                {nextEvent.title}
-              </h1>
-              <h4 className="text-md sm:text-xl tlg:text-3xl pb-5 text-gray-400">
-                {nextEvent.date}
-              </h4>
-              <p className="text-gray-600 text-sm sm:text-base mb-6">
-                {nextEvent.description}
-              </p>
-              <Link
-                to={nextEvent.id !== 'placeholder' ? `/inscription/${nextEvent.id}` : '#'}
-                className={`${
-                  nextEvent.id === 'placeholder'
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-green-bk hover:bg-[#148563]'
-                } text-white font-semibold px-6 py-3 rounded-lg transition`}
-                onClick={(e) => nextEvent.id === 'placeholder' && e.preventDefault()}
-              >
-                Pre-Register Now
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+      ) : null}
 
       {lastEvent && (
         <div className="px-4 sm:mx-12 md:mx-24 my-10 md:my-24">
@@ -268,7 +185,9 @@ export default function Home() {
             />
             <div className="p-6">
               <h3 className="text-xl font-semibold mb-2">{lastEvent.title}</h3>
-              <p className="text-gray-600 mb-4">{lastEvent.date}</p>
+              <p className="text-gray-600 mb-4">
+                {lastEvent.date.split("T")[0]}
+              </p>
               <p className="text-gray-700">{lastEvent.description}</p>
               <div className="mt-4">
                 <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">

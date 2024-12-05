@@ -2,7 +2,7 @@ import { useState } from "react";
 import { collection, addDoc } from "firebase/firestore";
 import { db, convertImageToBase64 } from "../../firebase";
 import { Calendar } from "lucide-react";
-import eventsData from "../../services/eventsdetails.json";
+//import eventsData from "../../services/eventsdetails.json";
 
 const categories = [
   "education",
@@ -145,7 +145,7 @@ export default function AddAnEvent() {
             <Calendar className="h-6 w-6 text-green-bk" />
           </div>
 
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <button
               onClick={handleAddAll}
               disabled={isUploading}
@@ -153,7 +153,7 @@ export default function AddAnEvent() {
             >
               {isUploading ? "Adding All Events..." : "Add All Events"}
             </button>
-          </div>
+          </div> */}
 
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">

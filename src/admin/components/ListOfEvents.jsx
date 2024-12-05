@@ -1,19 +1,13 @@
 import { useState, useEffect } from "react";
-import {
-  collection,
-  query,
-  orderBy,
-  getDocs,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
-import { db } from "../../firebase";
 import { BiSearch, BiTrash } from "react-icons/bi";
 import DeleteModal from "./DeleteModal";
+import { useEvents } from "../../context/EventsContext";
+import { doc, deleteDoc } from "firebase/firestore";
+import { db } from "../../firebase";
 
 export default function ListOfEvents() {
+  const { events: contextEvents, loading } = useEvents();
   const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,37 +19,14 @@ export default function ListOfEvents() {
   });
 
   useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  const fetchEvents = async () => {
-    try {
-      const eventsRef = collection(db, "events");
-      const q = query(eventsRef, orderBy("date", "desc")); // Ensure Firebase query is sorted by date desc
-      const querySnapshot = await getDocs(q);
-
-      const eventsData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        date: new Date(doc.data().date), // Store as Date object for proper sorting
-      }));
-
-      // Sort events by date in descending order
-      const sortedEvents = eventsData.sort((a, b) => b.date - a.date);
-
-      // Convert dates to locale string for display after sorting
-      const formattedEvents = sortedEvents.map(event => ({
+    if (contextEvents.length) {
+      const formattedEvents = contextEvents.map(event => ({
         ...event,
-        date: event.date.toLocaleDateString()
+        date: new Date(event.date).toLocaleDateString()
       }));
-
       setEvents(formattedEvents);
-    } catch (error) {
-      console.error("Error fetching events:", error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [contextEvents]);
 
   const handleDelete = async () => {
     if (!selectedEvent) return;

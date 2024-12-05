@@ -1,38 +1,8 @@
 import { useState, useEffect } from "react";
-import { collection, query, orderBy, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
+import { useEvents } from "../context/EventsContext";
 
 export default function History() {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const eventsRef = collection(db, "events");
-        const q = query(eventsRef, orderBy("date", "desc"));
-        const querySnapshot = await getDocs(q);
-
-        const eventsData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          date: new Date(doc.data().date).toLocaleDateString("fr-FR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-          }),
-        }));
-
-        setEvents(eventsData);
-      } catch (error) {
-        console.error("Error fetching events:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEvents();
-  }, []);
+  const { events, loading } = useEvents();
 
   if (loading) {
     return (
@@ -70,7 +40,7 @@ export default function History() {
                       {event.title}
                     </span>
                     <span className="text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-full">
-                      {event.date}
+                      {event.date.split('T')[0]}
                     </span>
                   </div>
                   <p className="mb-4 text-neutral-700">{event.description}</p>
@@ -112,7 +82,7 @@ export default function History() {
                       {event.title}
                     </h3>
                     <span className="text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-full">
-                      {event.date}
+                      {event.date.split('T')[0]}
                     </span>
                   </div>
                   <p className="text-gray-700 mb-4">{event.description}</p>

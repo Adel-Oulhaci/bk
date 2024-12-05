@@ -102,33 +102,35 @@ const UpdateMember = () => {
     e.preventDefault();
     setError("");
     setSuccess(false);
-
-    if (!formData.image) {
-      setError("Please select an image");
-      return;
-    }
+    setIsUploading(true);
 
     try {
-      setIsUploading(true);
-      const base64Image = await convertImageToBase64(formData.image);
-
-      const updatedData = {
+      const docRef = doc(db, selectedCategory, selectedItemId);
+      const updateData = {
         name: formData.name,
         role: formData.role,
-        image: base64Image,
-        date: formData.date,
       };
 
-      const docRef = doc(db, selectedCategory, selectedItemId);
-      await updateDoc(docRef, updatedData);
-      setSuccess(true);
-      setFormData({ name: "", role: "", image: "", date: "" });
-      const fileInput = document.querySelector('input[type="file"]');
-      if (fileInput) {
-        fileInput.value = "";
+      // Only update image if a new one is provided
+      if (formData.image && typeof formData.image === 'object') {
+        const base64Image = await convertImageToBase64(formData.image);
+        if (base64Image.length > 1048576) {
+          setError("Image size exceeds the limit after resizing.");
+          return;
+        }
+        updateData.image = base64Image;
       }
+
+      // Only update date if it's changed
+      if (formData.date && formData.date !== (await getDoc(docRef)).data().date) {
+        updateData.date = formData.date;
+      }
+
+      await updateDoc(docRef, updateData);
+      setSuccess(true);
     } catch (err) {
-      setError("Failed to update item. Please try again.");
+      console.error("Failed to update member:", err);
+      setError("Failed to update member. Please try again.");
     } finally {
       setIsUploading(false);
     }
@@ -187,73 +189,72 @@ const UpdateMember = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-  <div>
-    <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
-      Name
-    </label>
-    <input
-      type="text"
-      name="name"
-      value={formData.name}
-      onChange={handleChange}
-      placeholder="Enter name"
-      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
-      required
-    />
-  </div>
+            <div>
+              <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
+                Name
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Enter name"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
+                required
+              />
+            </div>
 
-  <div>
-    <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
-      Role
-    </label>
-    <input
-      type="text"
-      name="role"
-      value={formData.role}
-      onChange={handleChange}
-      placeholder="Enter role"
-      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
-    />
-  </div>
+            <div>
+              <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
+                Role
+              </label>
+              <input
+                type="text"
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                placeholder="Enter role"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
+              />
+            </div>
 
-  <div>
-    <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
-      Date
-    </label>
-    <input
-      type="date"
-      name="date"
-      value={formData.date}
-      onChange={handleChange}
-      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
-      required
-    />
-  </div>
+            <div>
+              <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
+                Date
+              </label>
+              <input
+                type="date"
+                name="date"
+                value={formData.date}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
+              />
+            </div>
 
-  <div>
-    <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
-      Image
-    </label>
-    <input
-      type="file"
-      accept="image/*"
-      onChange={handleFileChange}
-      className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold dark:file:bg-gray-600 dark:file:text-green-bk file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300"
-    />
-  </div>
+            <div>
+              <label className="block text-sm font-medium dark:text-green-bk text-gray-700">
+                Image
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold dark:file:bg-gray-600 dark:file:text-green-bk file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300"
+              />
+            </div>
 
-  <div className="flex justify-end">
-    <button
-      type="submit"
-      className={`px-4 py-2 text-white font-semibold rounded-md ${
-        isUploading ? "bg-gray-500" : "bg-green-500 hover:bg-green-600"
-      }`}
-      disabled={isUploading}
-    >
-      {isUploading ? "Updating..." : "Update"}
-    </button>
-  </div>
-</form>
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                className={`px-4 py-2 text-white font-semibold rounded-md ${
+                  isUploading ? "bg-gray-500" : "bg-green-500 hover:bg-green-600"
+                }`}
+                disabled={isUploading}
+              >
+                {isUploading ? "Updating..." : "Update"}
+              </button>
+            </div>
+          </form>
 
         </div>
       </div>

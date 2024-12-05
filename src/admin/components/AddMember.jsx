@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../firebase";
-//import { responsables, members } from "../../services/Details";
 
 const AddMember = () => {
   const [formData, setFormData] = useState({
@@ -97,61 +96,6 @@ const AddMember = () => {
     }
   };
 
-  const fetchImageAsBase64 = async (url) => {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return await convertImageToBase64(blob);
-  };
-
-  const handleAddAll = async () => {
-    console.log("Add All button clicked");
-    setError("");
-    setSuccess(false);
-
-    try {
-      for (const member of members) {
-        let base64Image = member.image ? await fetchImageAsBase64(member.image) : "";
-
-        if (base64Image && base64Image.length > 1048576) {
-          console.warn(`Skipping member ${member.name}: image size exceeds limit. Setting image to empty string.`);
-          base64Image = "";
-        }
-
-        const memberData = {
-          name: member.name,
-          role: member.role,
-          image: base64Image,
-          date: member.date || "",
-        };
-
-        await addDoc(collection(db, "members"), memberData);
-      }
-
-      for (const responsable of responsables) {
-        let base64Image = responsable.image ? await fetchImageAsBase64(responsable.image) : "";
-
-        if (base64Image && base64Image.length > 1048576) {
-          console.warn(`Skipping responsable ${responsable.name}: image size exceeds limit. Setting image to empty string.`);
-          base64Image = "";
-        }
-
-        const responsableData = {
-          name: responsable.name,
-          role: responsable.role,
-          image: base64Image,
-          date: responsable.date || "",
-        };
-
-        await addDoc(collection(db, "responsables"), responsableData);
-      }
-
-      setSuccess(true);
-    } catch (err) {
-      console.error("Error adding members/responsables:", err);
-      setError("Failed to add all members and responsables.");
-    }
-  };
-
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
@@ -232,22 +176,13 @@ const AddMember = () => {
             <div className="flex justify-end">
               <button
                 type="submit"
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-bk hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-bk disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isUploading}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
               >
-                {isUploading ? "Uploading..." : "Add Member"}
+                {isUploading ? "Adding..." : "Add Member"}
               </button>
             </div>
           </form>
-
-          {/* <div className="mt-6">
-            <button
-              onClick={handleAddAll}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600"
-            >
-              Add All Members and Responsables
-            </button>
-          </div> */}
         </div>
       </div>
     </div>

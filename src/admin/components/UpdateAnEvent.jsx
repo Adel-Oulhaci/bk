@@ -64,37 +64,47 @@ export default function UpdateAnEvent() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    setIsUpdating(true);
+    setError("");
+    setShowSuccess(false);
+    setIsUploading(true);
 
     try {
-      const base64Image = image
-        ? await convertImageToBase64(image)
-        : updatedEvent.image;
-
-      const startDate = new Date(updatedEvent.date);
-      const endDate = new Date(startDate);
-      endDate.setDate(
-        startDate.getDate() + (parseInt(updatedEvent.duration) - 1)
-      );
-
       const eventRef = doc(db, "events", selectedEvent);
-      await updateDoc(eventRef, {
-        ...updatedEvent,
-        date: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        duration: parseInt(updatedEvent.duration),
-        image: base64Image,
-        updatedAt: new Date().toISOString(),
-      });
+      const updateData = {
+        title: updatedEvent.title,
+        description: updatedEvent.description,
+      };
 
+      // Only update image if a new one is provided
+      if (image && typeof image === 'object') {
+        const base64Image = await convertImageToBase64(image);
+        if (base64Image.length > 1048576) {
+          setError("Image size exceeds the limit after resizing.");
+          return;
+        }
+        updateData.image = base64Image;
+      }
+
+      // Only update date if it's changed
+      if (updatedEvent.date && updatedEvent.date !== (await getDoc(eventRef)).data().date) {
+        const startDate = new Date(updatedEvent.date);
+        const endDate = new Date(startDate);
+        endDate.setDate(
+          startDate.getDate() + (parseInt(updatedEvent.duration) - 1)
+        );
+        updateData.date = startDate.toISOString();
+        updateData.endDate = endDate.toISOString();
+        updateData.duration = parseInt(updatedEvent.duration);
+      }
+
+      await updateDoc(eventRef, updateData);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
       fetchEvents();
-    } catch (error) {
-      console.error("Error updating event:", error);
-      setError(error.message || "Failed to update event. Please try again.");
+    } catch (err) {
+      console.error("Failed to update event:", err);
+      setError("Failed to update event. Please try again.");
     } finally {
-      setIsUpdating(false);
       setIsUploading(false);
     }
   };
@@ -192,7 +202,6 @@ export default function UpdateAnEvent() {
                 value={updatedEvent.date}
                 onChange={handleChange}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
-                required
               />
             </div>
 

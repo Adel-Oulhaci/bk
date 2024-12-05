@@ -105,5 +105,216 @@ export const ABOUT = [
   img: join
 }
 ];
-
+export const members = [
+  {
+    name: " ABDELMOULA Ahlem",
+    role: "Public Speaking & Data Analysis",
+    image: "",
+  },
+  {
+    name: "ACHOUR AOUL Fatima Zahra",
+    role: "Public Speaking & Creative Writer",
+    image: "",
+  },
+  {
+    name: "ALI ABBOU Asmaa",
+    role: "Event Organizer & Data Analysis",
+    image: "",
+  },
+  {
+    name: " AZOUZ Abir Ourida",
+    role: "Public Speaking & Data Analysis",
+    image: "",
+  },
+  {
+    name: " BELOUFA Fatima Zohra",
+    role: "Event Organizer",
+    image: "",
+  },
+  {
+    name: " BEN ABDELMOULA Fatima Zahra",
+    role: "Research and Analysis,Event Organizer",
+    image: "",
+  },
+  {
+    name: " BERNAOUI Khadidja",
+    role: "External Realtions",
+    image: "",
+  },
+  {
+    name: " BOUHAFS Douaa",
+    role: "Event Management",
+    image: "",
+  },
+  {
+    name: " BOUNOUA Khaoula",
+    role: "Event Organizer & Data Analysis",
+    image: "",
+  },
+  {
+    name: " BOUSSIR Bouchra Imene",
+    role: "Event Organizer",
+    image: "",
+  },
+  {
+    name: " BOUSSIR Nour El Houda Safaa",
+    role: "Creative Writer & Data Analysis",
+    image: "",
+  },
+  {
+    name: " CHAHER Douaa Anfel",
+    role: "Social Media Manager",
+    image: "",
+  },
+  {
+    name: " DAOUD Mohamed Abdessamed",
+    role: "Event Organizer",
+    image: "",
+  },
+  {
+    name: " DEHINI Hadil",
+    role: "Videographer",
+    image: "",
+  },
+  {
+    name: " DERRAR Chaima El Batoul",
+    role: "External Realtions",
+    image: "",
+  },
+  {
+    name: " DERRAR Yasser",
+    role: "Social Media Manager & Graphic Designer",
+    image: "",
+  },
+  {
+    name: " DJELLOULI Sabrina",
+    role: "Research and Analysis",
+    image: "",
+  },
+  {
+    name: " ELKEBIR Abdelaziz Yacine",
+    role: "Event Organizer",
+    image: "",
+  },
+  {
+    name: " GHAROUSSI Asmaa",
+    role: "Event Organizer",
+    image: "",
+  },
+  {
+    name: " GRELE Yasmine",
+    role: "Graphic Designer",
+    image: "",
+  },
+  {
+    name: " HAKEM Nesrine Zohra",
+    role: "Event Organizer",
+    image: "",
+  },
+  {
+    name: " KERNAG Manel Sara",
+    role: "Event Organizer",
+    image: "",
+  },
+  {
+    name: " KRARIL Mousaab",
+    role: "Devlopper",
+    image: "",
+  },
+  {
+    name: " LACHABI Raid Islam",
+    role: "Event Organizer",
+    image: "",
+  },
+  {
+    name: " LASSAKEUR Inès lina",
+    role: "Photographer",
+    image: "",
+  },
+  {
+    name: " MAAFA Nadjoua",
+    role: "Research and Analysis & Creative Writer",
+    image: "",
+  },
+  {
+    name: " MAHIEDDINE Hadjer",
+    role: "Social Media Manager,Creative Writer",
+    image: "",
+  },
+  {
+    name: " MANSOUR Sarah",
+    role: "Event Organizer",
+    image: "",
+  },
+  {
+    name: " MARROUK raghad lamis",
+    role: "Event Organizer",
+    image: "",
+  },
+  {
+    name: " MEDDAAH Amina",
+    role: "Event Organizer",
+    image: "",
+  },
+  {
+    name: " MENOUER Ihcene Fatima Zohra",
+    role: "Creative Writer",
+    image: "",
+  },
+  {
+    name: " MOUFFOK Yacine",
+    role: "Videographer",
+    image: "",
+  },
+  {
+    name: " OKBI Chaima Nacera",
+    role: "Research and Analysis",
+    image: "",
+  },
+  {
+    name: " OUAMARA Kawther",
+    role: "Strategic Planner",
+    image: "",
+  },
+  {
+    name: " OULHACI Adel Fakhr El Islem",
+    role: "Developper",
+    image: "",
+  },
+  {
+    name: " SAHLI Rayene",
+    role: "Graphic Designer,External Realtions",
+    image: "",
+  },
+  {
+    name: "SEFOUANE Zakaria Akram",
+    role: "Event Organizer",
+    image: "",
+  },
+  {
+    name: " SI MOHAMMED Manel",
+    role: "Event Management",
+    image: "",
+  },
+  {
+    name: " TALHA Fadoua Hibat Allah",
+    role: "Videographer & Photographer",
+    image: "",
+  },
+  {
+    name: " TALHA Yasser",
+    role: "Event Organizer",
+    image: "",
+  },
+  {
+    name: " YACINE Sabrine",
+    role: "External Realtions",
+    image: "",
+  },
+  {
+    name: " ZAIDI Khadidja",
+    role: "Media Planner",
+    image: "",
+  },
+];
 

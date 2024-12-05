@@ -6,6 +6,7 @@ import {
   doc,
   updateDoc,
   Timestamp,
+  orderBy,
 } from "firebase/firestore";
 import { db, convertImageToBase64 } from "../../firebase";
 import { Calendar } from "lucide-react";
@@ -42,20 +43,18 @@ export default function UpdateAnEvent() {
   const fetchEvents = async () => {
     try {
       const eventsRef = collection(db, "events");
-      const q = query(eventsRef);
+      const q = query(eventsRef, orderBy("date", "desc"));
       const querySnapshot = await getDocs(q);
 
       const eventsData = querySnapshot.docs
         .map((doc) => ({
           id: doc.id,
           ...doc.data(),
-          date: new Date(doc.data().date.seconds * 1000),
-          formattedDate: new Date(doc.data().date.seconds * 1000)
-            .toISOString()
-            .split("T")[0],
+          date: new Date(doc.data().date).toISOString().split("T")[0],
+          formattedDate: new Date(doc.data().date).toLocaleDateString(),
           duration: doc.data().duration || 1,
         }))
-        .sort((a, b) => b.date - a.date);
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
 
       setEvents(eventsData);
     } catch (error) {
@@ -93,11 +92,11 @@ export default function UpdateAnEvent() {
       const eventRef = doc(db, "events", selectedEvent);
       await updateDoc(eventRef, {
         ...updatedEvent,
-        date: Timestamp.fromDate(startDate),
-        endDate: Timestamp.fromDate(endDate),
+        date: startDate.toISOString(),
+        endDate: endDate.toISOString(),
         duration: parseInt(updatedEvent.duration),
         image: base64Image,
-        updatedAt: Timestamp.now(),
+        updatedAt: new Date().toISOString(),
       });
 
       setShowSuccess(true);
@@ -141,9 +140,9 @@ export default function UpdateAnEvent() {
   };
 
   return (
-    <div className="min-h-screen  py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
-        <div className="dark:bg-gray-700 shadow-lg border  border-emerald-100 dark:border-gray-600 dark:shadow-none shadow-emerald-300 rounded-lg p-6">
+        <div className="dark:bg-gray-700 shadow-lg border border-emerald-100 dark:border-gray-600 dark:shadow-none shadow-emerald-300 rounded-lg p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold dark:text-green-bk text-gray-900">
               Update Event
@@ -253,7 +252,6 @@ export default function UpdateAnEvent() {
                 accept="image/*"
                 onChange={handleFileChange}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white focus:outline-none focus:ring-offset-1 focus:ring focus:ring-green-bk"
-                required
               />
               <p className="mt-1 text-sm text-gray-500">Max file size: 5MB</p>
             </div>

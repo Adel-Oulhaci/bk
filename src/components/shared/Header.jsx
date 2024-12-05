@@ -9,9 +9,16 @@ export default function Header() {
   const closeMenu = () => setIsOpen(false);
 
   const handleClick = (link) => {
+    localStorage.setItem("activeLink", link);
     setActiveLink(link);
     closeMenu();
   };
+  useState(() => {
+    const savedLink = localStorage.getItem("activeLink");
+    if (savedLink) {
+      setActiveLink(savedLink);
+    }
+  }, []);
 
   const handleLogoClick = () => {
     setActiveLink("home");

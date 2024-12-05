@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { collection, addDoc, Timestamp } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { db, convertImageToBase64 } from "../../firebase";
 import { Calendar } from "lucide-react";
+import eventsData from "../../services/eventsdetails.json";
 
 const categories = [
   "education",
@@ -11,13 +12,14 @@ const categories = [
   "hiking",
   "games",
 ];
+
 export default function AddAnEvent() {
   const [newEvent, setNewEvent] = useState({
     title: "",
     date: "",
     category: "",
     description: "",
-    duration: "", 
+    duration: "",
   });
   const [image, setImage] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -40,12 +42,12 @@ export default function AddAnEvent() {
 
       const eventData = {
         title: newEvent.title,
-        date: Timestamp.fromDate(new Date(newEvent.date)),
+        date: new Date(newEvent.date).toISOString(),
         category: newEvent.category,
         image: base64Image,
         description: newEvent.description,
-        duration: newEvent.duration, // Added duration to eventData
-        createdAt: Timestamp.now(),
+        duration: newEvent.duration,
+        createdAt: new Date().toISOString(),
       };
 
       await addDoc(collection(db, "events"), eventData);
@@ -58,7 +60,7 @@ export default function AddAnEvent() {
         date: "",
         category: "",
         description: "",
-        duration: "", // Reset duration field
+        duration: "",
       });
       setImage(null);
 
@@ -69,6 +71,36 @@ export default function AddAnEvent() {
     } catch (error) {
       console.error("Error adding event:", error);
       setError(error.message || "Failed to add event. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleAddAll = async () => {
+    try {
+      setIsUploading(true);
+      setError("");
+
+      for (const event of eventsData.events) {
+        const eventData = {
+          ...event,
+          date: new Date(event.date.split("/").reverse().join("-"))
+            .toISOString()
+            .slice(0, 10),
+          createdAt: new Date().toISOString().slice(0, 10),
+          image:
+            event.image ||
+            "https://placehold.co/600x400/1B9C85/FFFFFF/png?text=Event+Image",
+        };
+
+        await addDoc(collection(db, "events"), eventData);
+      }
+
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (error) {
+      console.error("Error adding all events:", error);
+      setError(error.message || "Failed to add all events. Please try again.");
     } finally {
       setIsUploading(false);
     }
@@ -103,14 +135,24 @@ export default function AddAnEvent() {
   };
 
   return (
-    <div className="min-h-screen  py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
-        <div className="dark:bg-gray-700 shadow-lg border  border-emerald-100 dark:border-gray-600 dark:shadow-none shadow-emerald-300 rounded-lg p-6">
+        <div className="dark:bg-gray-700 shadow-lg border border-emerald-100 dark:border-gray-600 dark:shadow-none shadow-emerald-300 rounded-lg p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold dark:text-green-bk text-gray-900">
               Add New Event
             </h2>
             <Calendar className="h-6 w-6 text-green-bk" />
+          </div>
+
+          <div className="mb-6">
+            <button
+              onClick={handleAddAll}
+              disabled={isUploading}
+              className="w-full bg-green-bk text-white py-2 px-4 rounded-lg hover:bg-green-600 transition disabled:opacity-50"
+            >
+              {isUploading ? "Adding All Events..." : "Add All Events"}
+            </button>
           </div>
 
           {error && (

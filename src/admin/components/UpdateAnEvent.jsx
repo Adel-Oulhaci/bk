@@ -5,6 +5,7 @@ import {
   getDocs,
   doc,
   updateDoc,
+  getDoc,
   Timestamp,
   orderBy,
 } from "firebase/firestore";
@@ -70,12 +71,15 @@ export default function UpdateAnEvent() {
 
     try {
       const eventRef = doc(db, "events", selectedEvent);
+      const eventDoc = await getDoc(eventRef);
+      const currentEventData = eventDoc.data();
+
       const updateData = {
         title: updatedEvent.title,
         description: updatedEvent.description,
+        category: updatedEvent.category,
       };
 
-      // Only update image if a new one is provided
       if (image && typeof image === 'object') {
         const base64Image = await convertImageToBase64(image);
         if (base64Image.length > 1048576) {
@@ -85,13 +89,10 @@ export default function UpdateAnEvent() {
         updateData.image = base64Image;
       }
 
-      // Only update date if it's changed
-      if (updatedEvent.date && updatedEvent.date !== (await getDoc(eventRef)).data().date) {
+      if (updatedEvent.date && updatedEvent.date !== currentEventData.date) {
         const startDate = new Date(updatedEvent.date);
         const endDate = new Date(startDate);
-        endDate.setDate(
-          startDate.getDate() + (parseInt(updatedEvent.duration) - 1)
-        );
+        endDate.setDate(startDate.getDate() + (parseInt(updatedEvent.duration) - 1));
         updateData.date = startDate.toISOString();
         updateData.endDate = endDate.toISOString();
         updateData.duration = parseInt(updatedEvent.duration);
@@ -100,7 +101,6 @@ export default function UpdateAnEvent() {
       await updateDoc(eventRef, updateData);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-      fetchEvents();
     } catch (err) {
       console.error("Failed to update event:", err);
       setError("Failed to update event. Please try again.");

@@ -75,10 +75,11 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-2  lg:mt-0 text-gray-300">
-          © 2024 Badrat khayr. All rights reserved. <br />
-          Made by Moussaab & Adel 
+          <p>© 2024 Badrat khayr.<a href="https://github.com/Adel-Oulhaci/bk" target="_blank" className="text-green-bkp">All rights reserved.</a></p>
+          
         </div>
       </div>
+      
     </div>
   );
 }

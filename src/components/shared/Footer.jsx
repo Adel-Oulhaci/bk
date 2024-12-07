@@ -75,7 +75,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-2  lg:mt-0 text-gray-300">
-          <p>© 2024 Badrat khayr.<a href="https://github.com/Adel-Oulhaci/bk" target="_blank" className="text-green-bkp">All rights reserved.</a></p>
+          <p>© 2024 Badrat khayr.<a href="https://github.com/Adel-Oulhaci/bk" target="_blank" className="text-green-bk">All rights reserved.</a></p>
           
         </div>
       </div>
